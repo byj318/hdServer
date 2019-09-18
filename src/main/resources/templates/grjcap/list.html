@@ -1,0 +1,2373 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <title th:text="${title}"></title>
+
+     <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link href="/toastr/build/toastr.min.css" rel="stylesheet">
+    <link href="/bootstrap/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
+    <script type="text/javascript" src="/js/jquery-1.8.3.min.js"></script>
+	<script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/datatables.min.js"></script>
+	<script type="text/javascript" src="/toastr/build/toastr.min.js"></script>
+    <script type="text/javascript" src="/js/base.js"></script>
+<script type="text/javascript" src="/bootstrap/js/bootstrap-datetimepicker.js" charset="UTF-8"></script>
+<script type="text/javascript" src="/bootstrap/js/bootstrap-datetimepicker.zh-CN.js" charset="UTF-8"></script>
+	<script type="text/javascript" src="/js/sweetalert.min.js"></script>
+    <script type="text/javascript" src="/js/base.js"></script>
+    <script type="text/javascript">
+    var datas;
+    function format ( d ) {
+        return '<div><b>备注</b>: '+d.remark+'</div>';
+    }
+    	$(function(){
+    		   //提示信息  初始化设置 一般不需要改
+    		   
+            var lang = {
+                "sProcessing": "<img src='/images/loading.gif'><b>处理中...</b>",
+                "sLengthMenu": "每页 _MENU_ 项",
+                "sZeroRecords": "没有匹配结果",
+                "sInfo": "当前显示第 _START_ 至 _END_ 项，共 _TOTAL_ 项。",
+                "sInfoEmpty": "当前显示第 0 至 0 项，共 0 项",
+                "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+                "sInfoPostFix": "",
+                "sSearch": "搜索:",
+                "sUrl": "",
+                "sEmptyTable": "表中数据为空",
+                "sLoadingRecords": "载入中...",
+                "sInfoThousands": ",",
+                "oPaginate": {
+                    "sFirst": "首页",
+                    "sPrevious": "上页",
+                    "sNext": "下页",
+                    "sLast": "末页",
+                    "sJump": "跳转"
+                },
+                "oAria": {
+                    "sSortAscending": ": 以升序排列此列",
+                    "sSortDescending": ": 以降序排列此列"
+                }
+            };
+			var userName = $('#userName').val();
+          //重要修改 表格内容的自定义，需要根据业务定制
+            var dt = $("#grjcapExample").dataTable({
+                language:lang,  //提示信息
+                autoWidth: false,  //禁用自动调整列宽
+                stripeClasses: ["odd", "even"],  //为奇偶行加上样式，兼容不支持CSS伪类的场合
+                processing: true,  //隐藏加载提示,自行处理
+                serverSide: true,  //启用服务器端分页
+                searching: false,  //禁用原生搜索
+                orderMulti: false,  //启用多列排序
+                ordering: false,
+                scrollX: true,
+                order: [],  //取消默认排序查询,否则复选框一列会出现小箭头
+                renderer: "bootstrap",  //渲染样式：Bootstrap和jquery-ui
+                pagingType: "full_numbers",  //分页样式：simple,simple_numbers,full,full_numbers
+                columnDefs: [{
+                    "targets": 'nosort',  //列的样式名
+                    "orderable": false    //包含上样式名‘nosort’的禁止排序
+                }],
+                ajax: function (data, callback, settings) {
+					
+                    //封装请求参数
+                    var param = {};
+                    param.pageSize= data.length;//页面显示记录条数，在页面显示每页显示多少项的时候
+                   param.pageIndex = data.start;//当前页码
+                   var url = '/grjcap/listPage?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&courtyardArea='+$('#courtyardArea').val()+'&userName='+userName;
+                    //ajax请求数据方法
+                    $.ajax({
+                        type: "GET",
+                        url: url,//url请求的地址
+                        cache: false,  //禁用缓存
+                        data: param,  //传入组装的参数
+                        dataType: "json",
+                        success: function (result) {
+
+                                //封装返回数据重要
+                                var returnData = {};
+                                //这里直接自行返回了draw计数器,应该由后台返回
+                                returnData.draw = data.draw;
+                                //返回数据全部记录
+                                returnData.recordsTotal = result.recordsTotal;
+                                //后台不实现过滤功能，每次查询均视作全部结果
+                                returnData.recordsFiltered = result.recordsTotal;
+                                //返回的数据列表
+                                returnData.data = result.data;
+								datas = result.data;
+                                //调用DataTables提供的callback方法，代表数据已封装完成并传回DataTables进行渲染
+                                //此时的数据需确保正确无误，异常判断应在执行此回调前自行处理完毕
+                                callback(returnData);
+                        }
+                    });
+                },
+                //列表表头字段
+                columns: [
+                	{"data": "number"},
+    	            {"data": "rqsj"},
+    	            {"data": "swsResult"},
+    	            {"data": "swsTime"},
+    	            {"data": "jqbmResult"},
+    	            {"data": "jqbmTime"},
+    	            {"data": "zls1Result"},
+    	            {"data": "zls1Time"},
+    	            {"data": "zls2Result"},
+    	            {"data": "zls2Time"},
+    	            
+    	            
+    	            {"data": "fssaRysResult"},
+    	            {"data": "fssaRysTime"},
+    	            {"data": "fssaXjsResult"},
+    	            {"data": "fssaXjsTime"},
+    	            {"data": "fssbRysResult"},
+    	            {"data": "fssbRysTime"},
+    	            {"data": "fssbXjsResult"},
+    	            {"data": "fssbXjsTime"},
+    	            {"data": "txyaRysResult"},
+    	            {"data": "txyaRysTime"},
+    	            
+    	            
+    	            {"data": "txyaXjsResult"},
+    	            {"data": "txyaXjsTime"},
+    	            {"data": "txybRysResult"},
+    	            {"data": "txybRysTime"},
+    	            {"data": "txybXjsResult"},
+    	            {"data": "txybXjsTime"},
+    	            {"data": "txycRysResult"},
+    	            {"data": "txycRysTime"},
+    	            {"data": "txycXjsResult"},
+    	            {"data": "txycXjsTime"},
+    	            
+    	            {"data": "txydRysResult"},
+    	            {"data": "txydRysTime"},
+    	            {"data": "txydXjsResult"},
+    	            {"data": "txydXjsTime"},
+    	            {"data": "txyeRysResult"},
+    	            {"data": "txyeRysTime"},
+    	            {"data": "txyeXjsResult"},
+    	            {"data": "txyeXjsTime"},
+    	            {"data": "txyfRysResult"},
+    	            {"data": "txyfRysTime"},
+    	            
+    	            {"data": "txyfXjsResult"},
+    	            {"data": "txyfXjsTime"},
+    	            {"data": "txygRysResult"},
+    	            {"data": "txygRysTime"},
+    	            {"data": "txygXjsResult"},
+    	            {"data": "txygXjsTime"},
+    	            {"data": "txyhRysResult"},
+    	            {"data": "txyhRysTime"},
+    	            {"data": "txyhXjsResult"},
+    	            {"data": "txyhXjsTime"},
+    	            
+    	            {"data": "cccyr"},
+    	            {"data": "fccyr"},
+    	            {"data": "remark"},
+    	            {"data":"courtyardArea"}
+                ]
+            }).api(); //此处需调用api()方法,否则返回的是JQuery对象而不是DataTables的API对象
+            //允许多选
+            $('#grjcapExample tbody').on( 'click', 'tr', function () {
+                $(this).toggleClass('selected');
+            } );
+          //双击事件
+    		$("#grjcapExample tbody").on('dblclick','tr',function () {
+    		if($('#courtyardArea').val() != '全院'){
+				$('#updateSwsTime').val('');
+				$('#updateJqbmTime').val('');
+				$('#updateZls1Time').val('');
+				$('#updateZls2Time').val('');
+				$('#updateFssaRysTime').val('');
+				$('#updateFssaXjsTime').val('');
+				$('#updateFssbRysTime').val('');
+				$('#updateFssbXjsTime').val('');
+				$('#updateTxyaRysTime').val('');
+				$('#updateTxyaXjsTime').val('');
+				$('#updateTxybRysTime').val('');
+				$('#updateTxybXjsTime').val('');
+				$('#updateTxycRysTime').val('');
+				$('#updateTxycXjsTime').val('');
+				$('#updateTxydRysTime').val('');
+				$('#updateTxydXjsTime').val('');
+				$('#updateTxyeRysTime').val('');
+				$('#updateTxyeXjsTime').val('');
+				$('#updateTxyfRysTime').val('');
+				$('#updateTxyfXjsTime').val('');
+				$('#updateTxygRysTime').val('');
+				$('#updateTxygXjsTime').val('');
+				$('#updateTxyhRysTime').val('');
+				$('#updateTxyhXjsTime').val('');
+    			var number = $(this).children("td").eq(0).text();
+    			for(var i = 0;i<datas.length;i++){
+    				var data = datas[i];
+    				if(data.number == number){
+    					$('#updateModal').modal({backdrop:"static"});
+    	    			$('#updateId').val(data.id);
+    	        		$('#updateSwsResult').val(data.swsResult);
+						if(data.swsTime != null){
+							$('#updateSwsTime').val(data.rqsj+' '+data.swsTime);
+						}
+						var jqbmResult = data.jqbmResult;
+						var jqbmResultTemp = jqbmResult.substring(jqbmResult.indexOf('(')+1,jqbmResult.indexOf(')'));
+						$('#updateJqbmSpan').val(jqbmResultTemp);
+						$('#updateSwsResultTemp').val(jqbmResultTemp);
+						$('#updateJqbmResult').val(jqbmResult.substring(0,jqbmResult.indexOf('(')));
+						if(data.jqbmTime != null){
+							$('#updateJqbmTime').val(data.rqsj+' '+data.jqbmTime);
+						}
+						$('#updateZls1Result').val(data.zls1Result);
+						if(data.zls1Time != null){
+							$('#updateZls1Time').val(data.rqsj+' '+data.zls1Time);
+						}
+						$('#updateZls2Result').val(data.zls2Result);
+						if(data.zls2Time != null){
+							$('#updateZls2Time').val(data.rqsj+' '+data.zls2Time);
+						}
+						$('#updateFssaRysResult').val(data.fssaRysResult);
+						if(data.fssaRysTime != null){
+							$('#updateFssaRysTime').val(data.rqsj+' '+data.fssaRysTime);
+						}
+						$('#updateFssaXjsResult').val(data.fssaXjsResult);
+						if(data.fssaXjsTime != null){
+							$('#updateFssaXjsTime').val(data.rqsj+' '+data.fssaXjsTime);
+						}
+						$('#updateFssbRysResult').val(data.fssbRysResult);
+						if(data.fssbRysTime != null){
+							$('#updateFssbRysTime').val(data.rqsj+' '+data.fssbRysTime);
+						}
+						$('#updateFssbXjsResult').val(data.fssbXjsResult);
+						if(data.fssbXjsTime != null){
+							$('#updateFssbXjsTime').val(data.rqsj+' '+data.fssbXjsTime);
+						}
+
+						var txyaRysResult = data.txyaRysResult;
+						var txyaRysResultTemp = txyaRysResult.substring(txyaRysResult.indexOf('(')+1,txyaRysResult.indexOf(')'));
+						$('#updateTxyaRysResult').val(txyaRysResult.substring(0,txyaRysResult.indexOf('(')));
+						$('#updateTxyaRysResultTemp').val(txyaRysResultTemp);
+						if(txyaRysResultTemp != '') {
+							$('#updateTxySpan1').text(txyaRysResultTemp);
+						}
+						if(data.txyaRysTime != null){
+							$('#updateTxyaRysTime').val(data.rqsj+' '+data.txyaRysTime);
+						}
+						$('#updateTxyaXjsResult').val(data.txyaXjsResult);
+						if(data.txyaXjsTime != null){
+							$('#updateTxyaXjsTime').val(data.rqsj+' '+data.txyaXjsTime);
+						}
+
+						var txybRysResult = data.txybRysResult;
+						var txybRysResultTemp = txybRysResult.substring(txybRysResult.indexOf('(')+1,txybRysResult.indexOf(')'));
+						$('#updateTxybRysResult').val(txybRysResult.substring(0,txybRysResult.indexOf('(')));
+						$('#updateTxybRysResultTemp').val(txybRysResultTemp);
+						if(txybRysResultTemp != '') {
+							$('#updateTxySpan2').text(txybRysResultTemp);
+						}
+						if(data.txybRysTime != null){
+							$('#updateTxybRysTime').val(data.rqsj+' '+data.txybRysTime);
+						}
+						$('#updateTxybXjsResult').val(data.txybXjsResult);
+						if(data.txybXjsTime != null){
+							$('#updateTxybXjsTime').val(data.rqsj+' '+data.txybXjsTime);
+						}
+
+						var txycRysResult = data.txycRysResult;
+						var txycRysResultTemp = txycRysResult.substring(txycRysResult.indexOf('(')+1,txycRysResult.indexOf(')'));
+						$('#updateTxycRysResult').val(txycRysResult.substring(0,txycRysResult.indexOf('(')));
+						$('#updateTxycRysResultTemp').val(txycRysResultTemp);
+						if(txycRysResultTemp != '') {
+							$('#updateTxySpan3').text(txycRysResultTemp);
+						}
+						if(data.txycRysTime != null){
+							$('#updateTxycRysTime').val(data.rqsj+' '+data.txycRysTime);
+						}
+						$('#updateTxycXjsResult').val(data.txycXjsResult);
+						if(data.txycXjsTime != null){
+							$('#updateTxycXjsTime').val(data.rqsj+' '+data.txycXjsTime);
+						}
+
+						var txydRysResult = data.txydRysResult;
+						var txydRysResultTemp = txydRysResult.substring(txydRysResult.indexOf('(')+1,txydRysResult.indexOf(')'));
+						$('#updateTxydRysResult').val(txydRysResult.substring(0,txydRysResult.indexOf('(')));
+						$('#updateTxydRysResultTemp').val(txydRysResultTemp);
+						if(txydRysResultTemp != '') {
+							$('#updateTxySpan4').text(txydRysResultTemp);
+						}
+						if(data.txydRysTime != null){
+							$('#updateTxydRysTime').val(data.rqsj+' '+data.txydRysTime);
+						}
+						$('#updateTxydXjsResult').val(data.txydXjsResult);
+						if(data.txydXjsTime != null){
+							$('#updateTxydXjsTime').val(data.rqsj+' '+data.txydXjsTime);
+						}
+
+						var txyeRysResult = data.txyeRysResult;
+						var txyeRysResultTemp = txyeRysResult.substring(txyeRysResult.indexOf('(')+1,txyeRysResult.indexOf(')'));
+						$('#updateTxyeRysResult').val(txyeRysResult.substring(0,txyeRysResult.indexOf('(')));
+						$('#updateTxyeRysResultTemp').val(txyeRysResultTemp);
+						if(txyeRysResultTemp != '') {
+							$('#updateTxySpan5').text(txyeRysResultTemp);
+						}
+						if(data.txyeRysTime != null){
+							$('#updateTxyeRysTime').val(data.rqsj+' '+data.txyeRysTime);
+						}
+						$('#updateTxyeXjsResult').val(data.txyeXjsResult);
+						if(data.txyeXjsTime != null){
+							$('#updateTxyeXjsTime').val(data.rqsj+' '+data.txyeXjsTime);
+						}
+
+						var txyfRysResult = data.txyfRysResult;
+						var txyfRysResultTemp = txyfRysResult.substring(txyfRysResult.indexOf('(')+1,txyfRysResult.indexOf(')'));
+						$('#updateTxyfRysResult').val(txyfRysResult.substring(0,txyfRysResult.indexOf('(')));
+						$('#updateTxyfRysResultTemp').val(txyfRysResultTemp);
+						if(txyfRysResultTemp != '') {
+							$('#updateTxySpan6').text(txyfRysResultTemp);
+						}
+						if(data.txyfRysTime != null){
+							$('#updateTxyfRysTime').val(data.rqsj+' '+data.txyfRysTime);
+						}
+						$('#updateTxyfXjsResult').val(data.txyfXjsResult);
+						if(data.txyfXjsTime != null){
+							$('#updateTxyfXjsTime').val(data.rqsj+' '+data.txyfXjsTime);
+						}
+
+						var txygRysResult = data.txygRysResult;
+						var txygRysResultTemp = txygRysResult.substring(txygRysResult.indexOf('(')+1,txygRysResult.indexOf(')'));
+						$('#updateTxygRysResult').val(txygRysResult.substring(0,txygRysResult.indexOf('(')));
+						$('#updateTxygRysResultTemp').val(txygRysResultTemp);
+						if(txygRysResultTemp != '') {
+							$('#updateTxySpan7').text(txygRysResultTemp);
+						}
+						if(data.txygRysTime != null){
+							$('#updateTxygRysTime').val(data.rqsj+' '+data.txygRysTime);
+						}
+						$('#updateTxygXjsResult').val(data.txygXjsResult);
+						if(data.txygXjsTime != null){
+							$('#updateTxygXjsTime').val(data.rqsj+' '+data.txygXjsTime);
+						}
+
+						var txyhRysResult = data.txyhRysResult;
+						var txyhRysResultTemp = txyhRysResult.substring(txyhRysResult.indexOf('(')+1,txyhRysResult.indexOf(')'));
+						$('#updateTxyhRysResult').val(txyhRysResult.substring(0,txyhRysResult.indexOf('(')));
+						$('#updateTxyhRysResultTemp').val(txyhRysResultTemp);
+						if(txyhRysResultTemp != '') {
+							$('#updateTxySpan8').text(txyhRysResultTemp);
+						}
+						if(data.txyhRysTime != null){
+							$('#updateTxyhRysTime').val(data.rqsj+' '+data.txyhRysTime);
+						}
+						$('#updateTxyhXjsResult').val(data.txyhXjsResult);
+						if(data.txyhXjsTime != null){
+							$('#updateTxyhXjsTime').val(data.rqsj+' '+data.txyhXjsTime);
+						}
+
+						$('#updateCccyr').val(data.cccyr);
+						$('#updateFccyr').val(data.fccyr);
+						$('#updateRemark').text(data.remark);
+
+    	        		$("#updateCourtyardArea").val(data.courtyardArea);
+						$('#updateRqsj').val(data.rqsj);
+						$('#updateRqsj').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"yyyy-mm-dd",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 2,
+							minView: 2,
+							forceParse: 0
+						});
+
+						$('#updateSwsTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateJqbmTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateZls1Time').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateZls2Time').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateFssaRysTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateFssaXjsTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateFssbRysTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateFssbXjsTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxyaRysTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxyaXjsTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxybRysTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxybXjsTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxycRysTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxycXjsTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxydRysTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxydXjsTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxyeRysTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxyeXjsTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxyfRysTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxyfXjsTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxygRysTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxygXjsTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxyhRysTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+						$('#updateTxyhXjsTime').datetimepicker({
+							language: 'zh-CN', //汉化
+							format:"hh:ii",
+							weekStart: 1,
+							todayBtn:  1,
+							autoclose: 1,
+							todayHighlight: 1,
+							startView: 1,
+							minView: 0,
+							maxView: 1,
+							forceParse: 0
+						});
+    					break;
+    				}
+    			}}
+    		});
+            
+            $('#grjcapExample tbody').on( 'mouseenter', 'td', function () {
+                var colIdx = dt.cell(this).index().column;
+     
+                $( dt.cells().nodes() ).removeClass( 'highlight' );
+                $( dt.column( colIdx ).nodes() ).addClass( 'highlight' );
+            } );
+            $("#grjcapExample_length").append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id='add' class='btn btn-success'><span class='glyphicon glyphicon-plus' aria-hidden='true'></span> 新增</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id='delete' class='btn btn-danger'><span class='glyphicon glyphicon-remove-sign' aria-hidden='true'></span> 删除</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id='export' class='btn btn-primary'><span class='glyphicon glyphicon-export' aria-hidden='true'></span> 导出</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;起始日期:<input id='startTime' name='startTime' type='text' style='width:130px' readonly/>&nbsp;&nbsp;&nbsp;结束日期:<input id='endTime' name='endTime' type='text' style='width:130px' readonly/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id='search' class='btn btn-info'><span class='glyphicon glyphicon-search' aria-hidden='true'></span> 搜索</button>");
+            $('#startTime').datetimepicker({
+				language: 'zh-CN', //汉化
+				format:"yyyy-mm-dd",
+				 weekStart: 1,
+			     todayBtn:  1,
+				 autoclose: 1,
+				 todayHighlight: 1,
+				 startView: 2,
+				 minView: 2,
+				 forceParse: 0
+		    });
+            $('#endTime').datetimepicker({
+				language: 'zh-CN', //汉化
+				format:"yyyy-mm-dd",
+				 weekStart: 1,
+			     todayBtn:  1,
+				 autoclose: 1,
+				 todayHighlight: 1,
+				 startView: 2,
+				 minView: 2,
+				 forceParse: 0
+		    });
+            
+            $("#add").unbind("click");
+    		$("#add").bind("click",function(){
+    			/* 弹出添加页面  */
+    			
+    			$('#addModal').modal({backdrop:"static"});
+    			$('#addCourtyardArea').val($('#courtyardArea').val());
+    			var date = new Date();
+    			var month = date.getMonth() + 1;
+    			if(month < 10){
+    				month = "0"+ month;
+    			}
+    			var day = date.getDate();
+    			if(day < 10){
+    				day = "0" + day;
+    			}
+    			
+    			var defaultDate = date.getFullYear() + '-' + month + '-' + day;
+        		$('#rqsj').val(defaultDate);
+    			$('#rqsj').datetimepicker({
+    				language: 'zh-CN', //汉化
+    				format:"yyyy-mm-dd",
+    				weekStart: 1,
+   			     todayBtn:  1,
+   				 autoclose: 1,
+   				 todayHighlight: 1,
+   				 startView: 2,
+   				 minView: 2,
+   				 forceParse: 0
+    		    });
+
+				$('#swsTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#jqbmTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#zls1Time').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#zls2Time').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#fssaRysTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#fssaXjsTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#fssbRysTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#fssbXjsTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txyaRysTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txyaXjsTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txybRysTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txybXjsTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txycRysTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txycXjsTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txydRysTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txydXjsTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txyeRysTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txyeXjsTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txyfRysTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txyfXjsTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txygRysTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txygXjsTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txyhRysTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+				$('#txyhXjsTime').datetimepicker({
+					language: 'zh-CN', //汉化
+					format:"hh:ii",
+					weekStart: 1,
+					todayBtn:  1,
+					autoclose: 1,
+					todayHighlight: 1,
+					startView: 1,
+					minView: 0,
+					maxView: 1,
+					forceParse: 0
+				});
+    			
+    			
+    		});
+    		
+    		$("#delete").unbind("click");
+			$("#delete").bind("click",function(){
+				var length = dt.rows('.selected').data().length;
+				if(length == 0){
+					toastr.warning("请至少选中一行数据删除 !");
+				}else{
+					swal({
+						title: "你确定吗？",
+						text: "删除后，您将无法恢复此数据！",
+						icon: "warning",
+						buttons: ["取消","确认"]
+					}).then((willDelete) => {
+						if (willDelete) {
+							var length = dt.rows('.selected').data().length;
+
+							var datas = dt.rows('.selected').data();
+							var ids = '';
+							for(var i = 0;i<datas.length;i++){
+								var data = datas[i];
+								if(i == (datas.length - 1)){
+									ids += data.id;
+								}else{
+									ids += data.id + ',';
+								}
+							}
+							var deleteUrl = '/grjcap/'+ids;
+							$.ajax({
+								url:deleteUrl,
+								type:"DELETE",
+								dataType:"json",
+								error:function(){
+									toastr.error("删除数据出错!");
+								},
+								success:function(data){
+									if(data.success){
+										toastr.success(data.message);
+										dt.ajax.reload();
+									}else{
+										toastr.error("错误信息:  "+data.message);
+									}
+								}
+							});
+
+						}
+					});
+				}
+			});
+
+    		$("#export").unbind("click");
+    		$("#export").bind("click",function(){
+    			var url = '/grjcap/exportExcel?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&courtyardArea='+$('#courtyardArea').val();
+    			window.location.href = url;
+    		});
+    		
+    		$("#addClick").unbind("click");
+    		$("#addClick").bind("click",function(){
+    			var rqsj = $("#rqsj").val();
+    			var dateFormat =/^(\d{4})-(\d{2})-(\d{2})$/;
+    			if(dateFormat.test(rqsj)){
+    				var cccyr = $("#cccyr").val().trim();
+    				if(cccyr == ''){
+    					toastr.warning("初查采样人不能为空!");
+    					 document.getElementById('cccyr').focus();
+    				}else{
+    					var fccyr = $("#fccyr").val().trim();
+    					if(fccyr == ''){
+        					toastr.warning("复查采样人不能为空!");
+        					document.getElementById('fccyr').focus();
+        				}else{
+    					$.post("/grjcap",$("#addForm").serialize(),function(data){
+            				if(data.success){
+            					$('#addModal').modal('hide');
+        						toastr.success(data.message);
+        						dt.ajax.reload();
+								document.getElementById('addForm').reset();
+        					}else{
+        						toastr.error("错误信息:  "+data.message);
+        					}
+            			},"json");  
+        				}
+    				}
+    				 
+    			 }else{
+    			   toastr.warning("请输入正确格式的日期,如:2019-02-26 14:53");
+    			   document.getElementById('rqsj').focus();
+    			 }
+    		});
+    		
+    		$("#updateClick").unbind("click");
+    		$("#updateClick").bind("click",function(){
+    			var rqsj = $("#updateRqsj").val();
+    			var dateFormat =/^(\d{4})-(\d{2})-(\d{2})$/;
+    			if(dateFormat.test(rqsj)){
+    				var cccyr = $("#updateCccyr").val().trim();
+    				if(cccyr == ''){
+    					toastr.warning("初查采样人不能为空!");
+    					 document.getElementById('updateCccyr').focus();
+    				}else{
+    					var fccyr = $("#updateFccyr").val().trim();
+    					if(fccyr == ''){
+        					toastr.warning("复查采样人不能为空!");
+        					document.getElementById('updateFccyr').focus();
+        				}else{
+
+				var updateSwsTime = $('#updateSwsTime').val();
+				var dateFormat =/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/;
+				if(dateFormat.test(updateSwsTime)){
+					$('#updateSwsTime').val($('#updateSwsTime').val().substring(10,16));
+				}
+				var updateJqbmTime = $('#updateJqbmTime').val();
+				if(dateFormat.test(updateJqbmTime)){
+					$('#updateJqbmTime').val($('#updateJqbmTime').val().substring(10,16));
+				}
+				var updateZls1Time = $('#updateZls1Time').val();
+				if(dateFormat.test(updateZls1Time)){
+					$('#updateZls1Time').val($('#updateZls1Time').val().substring(10,16));
+				}
+				var updateZls2Time = $('#updateZls2Time').val();
+				if(dateFormat.test(updateZls2Time)){
+					$('#updateZls2Time').val($('#updateZls2Time').val().substring(10,16));
+				}
+				var updateFssaRysTime = $('#updateFssaRysTime').val();
+				if(dateFormat.test(updateFssaRysTime)){
+					$('#updateFssaRysTime').val($('#updateFssaRysTime').val().substring(10,16));
+				}
+				var updateFssaXjsTime = $('#updateFssaXjsTime').val();
+				if(dateFormat.test(updateFssaXjsTime)){
+					$('#updateFssaXjsTime').val($('#updateFssaXjsTime').val().substring(10,16));
+				}
+				var updateFssbRysTime = $('#updateFssbRysTime').val();
+				if(dateFormat.test(updateFssbRysTime)){
+					$('#updateFssbRysTime').val($('#updateFssbRysTime').val().substring(10,16));
+				}
+				var updateFssbXjsTime = $('#updateFssbXjsTime').val();
+				if(dateFormat.test(updateFssbXjsTime)){
+					$('#updateFssbXjsTime').val($('#updateFssbXjsTime').val().substring(10,16));
+				}
+				var updateTxyaRysTime = $('#updateTxyaRysTime').val();
+				if(dateFormat.test(updateTxyaRysTime)){
+					$('#updateTxyaRysTime').val($('#updateTxyaRysTime').val().substring(10,16));
+				}
+				var updateTxyaXjsTime = $('#updateTxyaXjsTime').val();
+				if(dateFormat.test(updateTxyaXjsTime)){
+					$('#updateTxyaXjsTime').val($('#updateTxyaXjsTime').val().substring(10,16));
+				}
+				var updateTxybRysTime = $('#updateTxybRysTime').val();
+				if(dateFormat.test(updateTxybRysTime)){
+					$('#updateTxybRysTime').val($('#updateTxybRysTime').val().substring(10,16));
+				}
+				var updateTxybXjsTime = $('#updateTxybXjsTime').val();
+				if(dateFormat.test(updateTxybXjsTime)){
+					$('#updateTxybXjsTime').val($('#updateTxybXjsTime').val().substring(10,16));
+				}
+				var updateTxycRysTime = $('#updateTxycRysTime').val();
+				if(dateFormat.test(updateTxycRysTime)){
+					$('#updateTxycRysTime').val($('#updateTxycRysTime').val().substring(10,16));
+				}
+				var updateTxycXjsTime = $('#updateTxycXjsTime').val();
+				if(dateFormat.test(updateTxycXjsTime)){
+					$('#updateTxycXjsTime').val($('#updateTxycXjsTime').val().substring(10,16));
+				}
+				var updateTxydRysTime = $('#updateTxydRysTime').val();
+				if(dateFormat.test(updateTxydRysTime)){
+					$('#updateTxydRysTime').val($('#updateTxydRysTime').val().substring(10,16));
+				}
+				var updateTxydXjsTime = $('#updateTxydXjsTime').val();
+				if(dateFormat.test(updateTxydXjsTime)){
+					$('#updateTxydXjsTime').val($('#updateTxydXjsTime').val().substring(10,16));
+				}
+				var updateTxyeRysTime = $('#updateTxyeRysTime').val();
+				if(dateFormat.test(updateTxyeRysTime)){
+					$('#updateTxyeRysTime').val($('#updateTxyeRysTime').val().substring(10,16));
+				}
+				var updateTxyeXjsTime = $('#updateTxyeXjsTime').val();
+				if(dateFormat.test(updateTxyeXjsTime)){
+					$('#updateTxyeXjsTime').val($('#updateTxyeXjsTime').val().substring(10,16));
+				}
+				var updateTxyfRysTime = $('#updateTxyfRysTime').val();
+				if(dateFormat.test(updateTxyfRysTime)){
+					$('#updateTxyfRysTime').val($('#updateTxyfRysTime').val().substring(10,16));
+				}
+				var updateTxyfXjsTime = $('#updateTxyfXjsTime').val();
+				if(dateFormat.test(updateTxyfXjsTime)){
+					$('#updateTxyfXjsTime').val($('#updateTxyfXjsTime').val().substring(10,16));
+				}
+				var updateTxygRysTime = $('#updateTxygRysTime').val();
+				if(dateFormat.test(updateTxygRysTime)){
+					$('#updateTxygRysTime').val($('#updateTxygRysTime').val().substring(10,16));
+				}
+				var updateTxygXjsTime = $('#updateTxygXjsTime').val();
+				if(dateFormat.test(updateTxygXjsTime)){
+					$('#updateTxygXjsTime').val($('#updateTxygXjsTime').val().substring(10,16));
+				}
+				var updateTxyhRysTime = $('#updateTxyhRysTime').val();
+				if(dateFormat.test(updateTxyhRysTime)){
+					$('#updateTxyhRysTime').val($('#updateTxyhRysTime').val().substring(10,16));
+				}
+				var updateTxyhXjsTime = $('#updateTxyhXjsTime').val();
+				if(dateFormat.test(updateTxyhXjsTime)){
+					$('#updateTxyhXjsTime').val($('#updateTxyhXjsTime').val().substring(10,16));
+				}
+
+
+
+                $.ajax({
+                    type: "PUT",
+                    url: "/grjcap",//url请求的地址
+                    cache: false,  //禁用缓存
+                    data: $("#updateForm").serialize(),  //传入组装的参数
+                    dataType: "json",
+                    success: function (data) {
+                    	if(data.success){
+        					$('#updateModal').modal('hide');
+    						toastr.success(data.message);
+    						dt.ajax.reload();
+    					}else{
+    						toastr.error("错误信息:  "+data.message);
+    					}
+                    }
+                });
+        				}
+    				}
+    				 
+    			 }else{
+    			   toastr.warning("请输入正确格式的日期,如:2019-02-26");
+    			   document.getElementById('updateRqsj').focus();
+    			 }
+    		});
+    		
+    		$("#startTime").unbind("change");
+    		$("#startTime").bind("change",function(){
+    			dt.ajax.reload();
+    		});
+    		
+    		$("#endTime").unbind("change");
+    		$("#endTime").bind("change",function(){
+    			dt.ajax.reload();
+    		});
+    		
+    		$("#search").unbind("click");
+    		$("#search").bind("click",function(){
+    			dt.ajax.reload();
+    		});
+    		
+    		
+    		$("#jqbmListUl li").on('click','a',function () {
+    			$("#jqbmSpan").text($(this).children("span").text());
+    			$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#swsResultTemp").val($(this).children("span").text());
+    		});
+    		
+    		$("#txyListUl1 li").on('click','a',function () {
+    			$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#txyaRysResultTemp").val($(this).children("span").text());
+    		});
+    		$("#txyListUl2 li").on('click','a',function () {
+    			$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#txybRysResultTemp").val($(this).children("span").text());
+    		});
+    		$("#txyListUl3 li").on('click','a',function () {
+    			$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#txycRysResultTemp").val($(this).children("span").text());
+    		});
+    		$("#txyListUl4 li").on('click','a',function () {
+    			$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#txydRysResultTemp").val($(this).children("span").text());
+    		});
+    		$("#txyListUl5 li").on('click','a',function () {
+    			$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#txyeRysResultTemp").val($(this).children("span").text());
+    		});
+    		$("#txyListUl6 li").on('click','a',function () {
+    			$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#txyfRysResultTemp").val($(this).children("span").text());
+    		});
+    		$("#txyListUl7 li").on('click','a',function () {
+    			$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#txygRysResultTemp").val($(this).children("span").text());
+    		});
+    		$("#txyListUl8 li").on('click','a',function () {
+    			$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#txyhRysResultTemp").val($(this).children("span").text());
+    		});
+
+
+
+			//修改
+			$("#updateJqbmListUl li").on('click','a',function () {
+				$("#updateJqbmSpan").text($(this).children("span").text());
+				$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#updateSwsResultTemp").val($(this).children("span").text());
+			});
+
+			$("#updateTxyListUl1 li").on('click','a',function () {
+				$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#updateTxyaRysResultTemp").val($(this).children("span").text());
+			});
+			$("#updateTxyListUl2 li").on('click','a',function () {
+				$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#updateTxybRysResultTemp").val($(this).children("span").text());
+			});
+			$("#updateTxyListUl3 li").on('click','a',function () {
+				$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#updateTxycRysResultTemp").val($(this).children("span").text());
+			});
+			$("#updateTxyListUl4 li").on('click','a',function () {
+				$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#updateTxydRysResultTemp").val($(this).children("span").text());
+			});
+			$("#updateTxyListUl5 li").on('click','a',function () {
+				$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#updateTxyeRysResultTemp").val($(this).children("span").text());
+			});
+			$("#updateTxyListUl6 li").on('click','a',function () {
+				$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#updateTxyfRysResultTemp").val($(this).children("span").text());
+			});
+			$("#updateTxyListUl7 li").on('click','a',function () {
+				$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#updateTxygRysResultTemp").val($(this).children("span").text());
+			});
+			$("#updateTxyListUl8 li").on('click','a',function () {
+				$(this).parent().parent().siblings("button").children("span").eq(0).text($(this).children("span").text());
+				$("#updateTxyhRysResultTemp").val($(this).children("span").text());
+			});
+
+			$('#updateModal').on('shown.bs.modal',function(e){     //模态框的ID
+				$('#updateSwsResult').focus();
+				$('#updateSwsResult').select();
+			});
+			$('#addModal').on('shown.bs.modal',function(e){     //模态框的ID
+				$('#swsResult').focus();
+			});
+
+			$('#grjcapSelect').unbind("change");
+    		$('#grjcapSelect').bind("change",function(){
+    			$('#grjcapSpan').text($(this).val());
+    			$('#courtyardArea').val($(this).val());
+    			dt.ajax.reload();
+    			if($(this).val() == '全院'){
+    				$('#add').hide();
+    			}else{
+					$('#add').show();
+    			}
+    		});
+
+    		$('#grjcapSelect').val($('#courtyardArea').val());
+    		
+    	});
+
+
+	function focusNextInput(thisInput)
+	{
+		var inputs = document.getElementsByClassName("add");
+		for(var i = 0;i<inputs.length;i++){
+			// 如果是最后一个，则焦点回到第一个
+			if(i==(inputs.length-1)){
+
+			}else if(thisInput == inputs[i]){
+				inputs[i+1].focus();
+				inputs[i+1].select();
+				break;
+			}
+		}
+	};
+
+	function focusNextInput2(thisInput)
+	{
+		var inputs = document.getElementsByClassName("update");
+		for(var i = 0;i<inputs.length;i++){
+			// 如果是最后一个，则焦点回到第一个
+			if(i==(inputs.length-1)){
+
+			}else if(thisInput == inputs[i]){
+				inputs[i+1].focus();
+				inputs[i+1].select();
+				break;
+			}
+		}
+	};
+
+    </script>
+    <link rel="stylesheet" type="text/css" href="/css/datatables.min.css">
+    <style type="text/css">
+    	td.details-control {
+    background: url('/css/DataTables-1.10.18/images/edit_add.png') no-repeat center center;
+    cursor: pointer;
+		}
+		tr.details td.details-control {
+		    background: url('/css/DataTables-1.10.18/images/cancel.png') no-repeat center center;
+		}
+			
+	td.highlight {
+	    background-color: whitesmoke !important;
+	}
+	h2{
+		text-align:center
+	}
+	th {
+	    text-align: center;
+	}
+	td {
+	    text-align: center;
+	}
+    </style>
+</head>
+<body>
+<h2>感染监测安排 (<span id="grjcapSpan" th:text="${courtyardArea}"></span>)</h2>
+<select class="form-control" style="width:auto" id="grjcapSelect"><option value="新院">新院</option><option value="老院">老院</option><option value="全院">全院</option></select>
+
+<input type="hidden" th:value="${courtyardArea}" id="courtyardArea"/>
+ <link rel="stylesheet" type="text/css" href="/css/datatables.min.css">
+<div>
+  <table id="grjcapExample" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th rowspan="3">序号</th>
+                <th rowspan="3">日期</th>
+                <th rowspan="2" colspan="2">手卫生</th>
+                <th colspan="6" style="color:blue">物表</th>  
+                <th colspan="4">反渗水A</th> 
+                <th colspan="4" style="color:blue">反渗水B</th> 
+                <th colspan="4">透析液</th>    
+                <th colspan="4" style="color:blue">透析液</th>  
+                <th colspan="4">透析液</th>  
+                <th colspan="4" style="color:blue">透析液</th>   
+                <th colspan="4">透析液</th>    
+                <th colspan="4" style="color:blue">透析液</th>  
+                <th colspan="4">透析液</th>  
+                <th colspan="4" style="color:blue">透析液</th>  
+                <th rowspan="3">初查采样人</th> 
+                <th rowspan="3">复查采样人</th> 
+                <th rowspan="3">备注</th>
+				<th rowspan="3">院区</th>
+			</tr>
+            <tr>
+            	<th colspan="2" style="color:blue">机器表面</th> 
+            	<th colspan="2" style="color:blue">治疗室1</th> 
+            	<th colspan="2" style="color:blue">治疗室2</th> 
+            	<th colspan="2">热源数</th> 
+            	<th colspan="2">细菌数</th>  
+            	<th colspan="2" style="color:blue">热源数</th> 
+            	<th colspan="2" style="color:blue">细菌数</th>  
+            	<th colspan="2">热源数</th> 
+            	<th colspan="2">细菌数</th>  
+            	<th colspan="2" style="color:blue">热源数</th> 
+            	<th colspan="2" style="color:blue">细菌数</th>  
+            	<th colspan="2">热源数</th> 
+            	<th colspan="2">细菌数</th>  
+            	<th colspan="2" style="color:blue">热源数</th> 
+            	<th colspan="2" style="color:blue">细菌数</th>  
+            	<th colspan="2">热源数</th> 
+            	<th colspan="2">细菌数</th>  
+            	<th colspan="2" style="color:blue">热源数</th> 
+            	<th colspan="2" style="color:blue">细菌数</th>  
+            	<th colspan="2">热源数</th> 
+            	<th colspan="2">细菌数</th>  
+            	<th colspan="2" style="color:blue">热源数</th> 
+            	<th colspan="2" style="color:blue">细菌数</th>  
+            </tr>
+            <tr>
+            	<th>结果</th>
+            	<th>时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            	<th>结果</th>
+            	<th>时间</th>
+            	
+            	<th>结果</th>
+            	<th>时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            	<th>结果</th>
+            	<th>时间</th>
+            	<th>结果</th>
+            	<th>时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            	<th>结果</th>
+            	<th>时间</th>
+            	<th>结果</th>
+            	<th>时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            	<th>结果</th>
+            	<th>时间</th>
+            	<th>结果</th>
+            	<th>时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            	
+            	<th>结果</th>
+            	<th>时间</th>
+            	<th>结果</th>
+            	<th>时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            	<th style="color:blue">结果</th>
+            	<th style="color:blue">时间</th>
+            </tr>
+        </thead>
+       
+    </table>
+    
+</div>
+
+
+
+<!-- 添加页面 -->
+<div class="modal fade" id="addModal" tabindex="-1" role="dialog"  aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document" style="width: 1000px;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myAddModalLabel">添加感染监测安排</h4>
+      </div>
+      <div class="modal-body">
+				        <form id="addForm" class="form-horizontal">
+				        <input type="hidden" name="courtyardArea" id="addCourtyardArea"/>
+							<input type="hidden" name="swsResultTemp" id="swsResultTemp" th:value="${jqbm}"/>
+							<input type="hidden" name="txyaRysResultTemp" id="txyaRysResultTemp" th:value="${txy}"/>
+							<input type="hidden" name="txybRysResultTemp" id="txybRysResultTemp" th:value="${txy}"/>
+							<input type="hidden" name="txycRysResultTemp" id="txycRysResultTemp" th:value="${txy}"/>
+							<input type="hidden" name="txydRysResultTemp" id="txydRysResultTemp" th:value="${txy}"/>
+							<input type="hidden" name="txyeRysResultTemp" id="txyeRysResultTemp" th:value="${txy}"/>
+							<input type="hidden" name="txyfRysResultTemp" id="txyfRysResultTemp" th:value="${txy}"/>
+							<input type="hidden" name="txygRysResultTemp" id="txygRysResultTemp" th:value="${txy}"/>
+							<input type="hidden" name="txyhRysResultTemp" id="txyhRysResultTemp" th:value="${txy}"/>
+				         <div class="form-group">
+				    <label  class="col-sm-2 control-label">日期</label>
+				    <div class="col-sm-4">
+				      <input id="rqsj" name="rqsj" class="form-control" type="text" readonly="readonly"/>
+				    </div>
+				  </div>
+				 
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(手卫生)</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add" id="swsResult"  name="swsResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(手卫生)</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control" id="swsTime"  name="swsTime" readonly="readonly">
+				    </div>
+				  </div>
+				  
+				   <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(物表)(机器表面)</label>
+				    <div class="col-lg-4">
+    <div class="input-group">
+      <div class="input-group-btn">
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span id="jqbmSpan" th:text="${jqbm}">Action</span></span> <span class="caret"></span></button>
+        <ul class="dropdown-menu" id="jqbmListUl">
+          <li th:each="str:${jqbmList}"><a href="#"><span th:text="${str}"></span></a></li>
+        </ul>
+      </div><!-- /btn-group -->
+      <input type="text" class="form-control add" aria-label="..." id="jqbmResult" name="jqbmResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+    </div><!-- /input-group -->
+  </div>
+				    <label  class="col-sm-2 control-label">时间(物表)(机器表面)</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control" id="jqbmTime"  name="jqbmTime" readonly="readonly" />
+				    </div>
+				  </div>
+				  
+				   <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(物表)(治疗室1)</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="zls1Result" id="zls1Result" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(物表)(治疗室1)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="zls1Time" class="form-control"  name="zls1Time" readonly="readonly"/>
+				    </div>
+				  </div>
+				  
+				 
+			
+				  
+				   <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(物表)(治疗室2)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="zls2Result" class="form-control add"  name="zls2Result" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(物表)(治疗室2)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="zls2Time" class="form-control"  name="zls2Time" readonly="readonly"/>
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(反渗水A)(热源数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="fssaRysResult" class="form-control add"  name="fssaRysResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(反渗水A)(热源数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="fssaRysTime" class="form-control"  name="fssaRysTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(反渗水A)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="fssaXjsResult" class="form-control add"  name="fssaXjsResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(反渗水A)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="fssaXjsTime" class="form-control"  name="fssaXjsTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(反渗水B)(热源数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="fssbRysResult" class="form-control add"  name="fssbRysResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(反渗水B)(热源数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="fssbRysTime" class="form-control"  name="fssbRysTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(反渗水B)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="fssbXjsResult" class="form-control add"  name="fssbXjsResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(反渗水B)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="fssbXjsTime" class="form-control"  name="fssbXjsTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  
+				<div style="border-style: ridge;padding:10px;">
+
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+				   				     <div class="col-sm-4">
+				    <div class="input-group">
+				      <div class="input-group-btn">
+				        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span th:text="${txy}">Action</span> <span class="caret"></span></button>
+				        <ul class="dropdown-menu" id="txyListUl1">
+				          <li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+				        </ul>
+				      </div>
+				      <input type="text" class="form-control add" aria-label="..." id="txyaRysResult" name="txyaRysResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				  </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txyaRysTime" class="form-control"  name="txyaRysTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txyaXjsResult" class="form-control add"  name="txyaXjsResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txyaXjsTime" class="form-control"  name="txyaXjsTime" readonly="readonly"/>
+				    </div>
+				  </div>
+			</div>
+			</br>
+
+
+<div style="border-style: ridge;padding:10px;">
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+				   				     <div class="col-sm-4">
+				    <div class="input-group">
+				      <div class="input-group-btn">
+				        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span th:text="${txy}">Action</span> <span class="caret"></span></button>
+				        <ul class="dropdown-menu" id="txyListUl2">
+				          <li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+				        </ul>
+				      </div>
+				      <input type="text" class="form-control add" aria-label="..." id="txybRysResult" name="txybRysResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				  </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txybRysTime" class="form-control"  name="txybRysTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txybXjsResult" class="form-control add"  name="txybXjsResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txybXjsTime" class="form-control"  name="txybXjsTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  </div>
+			</br>
+			
+			<div style="border-style: ridge;padding:10px;">
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+				    				     <div class="col-sm-4">
+				    <div class="input-group">
+				      <div class="input-group-btn">
+				        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span th:text="${txy}">Action</span> <span class="caret"></span></button>
+				        <ul class="dropdown-menu" id="txyListUl3">
+				          <li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+				        </ul>
+				      </div>
+				      <input type="text" id="txycRysResult" name="txycRysResult" class="form-control add" aria-label="..." onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				  </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txycRysTime" class="form-control"  name="txycRysTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txycXjsResult" class="form-control add"  name="txycXjsResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txycXjsTime" class="form-control"  name="txycXjsTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  </div>
+			</br>
+				  
+				  <div style="border-style: ridge;padding:10px;">
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+				   				     <div class="col-sm-4">
+				    <div class="input-group">
+				      <div class="input-group-btn">
+				        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span th:text="${txy}">Action</span> <span class="caret"></span></button>
+				        <ul class="dropdown-menu" id="txyListUl4">
+				          <li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+				        </ul>
+				      </div>
+				      <input type="text" id="txydRysResult" name="txydRysResult" class="form-control add" aria-label="..." onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				  </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txydRysTime" class="form-control"  name="txydRysTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txydXjsResult" class="form-control add"  name="txydXjsResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txydXjsTime" class="form-control"  name="txydXjsTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  </div>
+			</br>
+				  
+				  <div style="border-style: ridge;padding:10px;">
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+				   				     <div class="col-sm-4">
+				    <div class="input-group">
+				      <div class="input-group-btn">
+				        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span th:text="${txy}">Action</span> <span class="caret"></span></button>
+				        <ul class="dropdown-menu" id="txyListUl5">
+				          <li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+				        </ul>
+				      </div>
+				      <input type="text" id="txyeRysResult" name="txyeRysResult" class="form-control add" aria-label="..." onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				  </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txyeRysTime" class="form-control"  name="txyeRysTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txyeXjsResult" class="form-control add"  name="txyeXjsResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txyeXjsTime" class="form-control"  name="txyeXjsTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  </div>
+			</br>
+			
+			 <div style="border-style: ridge;padding:10px;">
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+				    				     <div class="col-sm-4">
+				    <div class="input-group">
+				      <div class="input-group-btn">
+				        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span th:text="${txy}">Action</span> <span class="caret"></span></button>
+				        <ul class="dropdown-menu" id="txyListUl6">
+				          <li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+				        </ul>
+				      </div>
+				      <input type="text" id="txyfRysResult" name="txyfRysResult" class="form-control add" aria-label="..." onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				  </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txyfRysTime" class="form-control"  name="txyfRysTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txyfXjsResult" class="form-control add"  name="txyfXjsResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txyfXjsTime" class="form-control"  name="txyfXjsTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  </div>
+			</br>
+			
+			<div style="border-style: ridge;padding:10px;">
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+				   				     <div class="col-sm-4">
+				    <div class="input-group">
+				      <div class="input-group-btn">
+				        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span th:text="${txy}">Action</span> <span class="caret"></span></button>
+				        <ul class="dropdown-menu" id="txyListUl7">
+				          <li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+				        </ul>
+				      </div>
+				      <input type="text" id="txygRysResult" name="txygRysResult" class="form-control add" aria-label="..." onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				  </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txygRysTime" class="form-control"  name="txygRysTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txygXjsResult" class="form-control add"  name="txygXjsResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txygXjsTime" class="form-control"  name="txygXjsTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  </div>
+			</br>
+				  
+				  <div style="border-style: ridge;padding:10px;">
+				   <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+				   				     <div class="col-sm-4">
+				    <div class="input-group">
+				      <div class="input-group-btn">
+				        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span th:text="${txy}">Action</span> <span class="caret"></span></button>
+				        <ul class="dropdown-menu" id="txyListUl8">
+				          <li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+				        </ul>
+				      </div>
+				      <input type="text" id="txyhRysResult" name="txyhRysResult" class="form-control add" aria-label="..." onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				  </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txyhRysTime" class="form-control"  name="txyhRysTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txyhXjsResult" class="form-control add"  name="txyhXjsResult" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="txyhXjsTime" class="form-control"  name="txyhXjsTime" readonly="readonly"/>
+				    </div>
+				  </div>
+				  </div>
+			</br>
+			
+				  
+				   <div class="form-group">
+				    <label  class="col-sm-2 control-label">初查采样人</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="cccyr" class="form-control add"  name="cccyr" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">复查采样人</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="fccyr" class="form-control add"  name="fccyr" onkeypress="if(event.keyCode==13) focusNextInput(this);">
+				    </div>
+				  </div>
+				  
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">备注</label>
+				    <div class="col-sm-10">
+				      <textarea class="form-control add" name="remark" onkeypress="if(event.keyCode==13) focusNextInput(this);"></textarea>
+				    </div>
+				    
+				  </div>
+				</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal"><span class='glyphicon glyphicon-remove' aria-hidden='true'></span> 关闭</button>
+        <button type="button" id="addClick" class="btn btn-primary"><span class='glyphicon glyphicon-ok' aria-hidden='true'></span> 保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- 修改页面 -->
+<div class="modal fade" id="updateModal" tabindex="-1" role="dialog"  aria-labelledby="myModalLabel">
+	<div class="modal-dialog" role="document" style="width: 1000px;">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="updateModalLabel">添加感染监测安排</h4>
+			</div>
+			<div class="modal-body">
+				<form id="updateForm" class="form-horizontal">
+					<input type="hidden" name="id" id="updateId"/>
+					<input type="hidden" name="courtyardArea" id="updateCourtyardArea"/>
+					<input type="hidden" name="swsResultTemp" id="updateSwsResultTemp" />
+					<input type="hidden" name="txyaRysResultTemp" id="updateTxyaRysResultTemp" />
+					<input type="hidden" name="txybRysResultTemp" id="updateTxybRysResultTemp" />
+					<input type="hidden" name="txycRysResultTemp" id="updateTxycRysResultTemp" />
+					<input type="hidden" name="txydRysResultTemp" id="updateTxydRysResultTemp" />
+					<input type="hidden" name="txyeRysResultTemp" id="updateTxyeRysResultTemp" />
+					<input type="hidden" name="txyfRysResultTemp" id="updateTxyfRysResultTemp" />
+					<input type="hidden" name="txygRysResultTemp" id="updateTxygRysResultTemp" />
+					<input type="hidden" name="txyhRysResultTemp" id="updateTxyhRysResultTemp" />
+					<div class="form-group">
+						<label  class="col-sm-2 control-label">日期</label>
+						<div class="col-sm-4">
+							<input id="updateRqsj" name="rqsj" class="form-control" type="text" readonly="readonly"/>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label  class="col-sm-2 control-label">结果(手卫生)</label>
+						<div class="col-sm-4">
+							<input type="text" class="form-control update" id="updateSwsResult"  name="swsResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+						</div>
+						<label  class="col-sm-2 control-label">时间(手卫生)</label>
+						<div class="col-sm-4">
+							<input type="text" class="form-control" id="updateSwsTime"  name="swsTime" readonly="readonly">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label  class="col-sm-2 control-label">结果(物表)(机器表面)</label>
+						<div class="col-lg-4">
+							<div class="input-group">
+								<div class="input-group-btn">
+									<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span id="updateJqbmSpan" th:text="${jqbm}">Action</span></span> <span class="caret"></span></button>
+									<ul class="dropdown-menu" id="updateJqbmListUl">
+										<li th:each="str:${jqbmList}"><a href="#"><span th:text="${str}"></span></a></li>
+									</ul>
+								</div><!-- /btn-group -->
+								<input type="text" class="form-control update" aria-label="..." id="updateJqbmResult" name="jqbmResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+							</div><!-- /input-group -->
+						</div>
+						<label  class="col-sm-2 control-label">时间(物表)(机器表面)</label>
+						<div class="col-sm-4">
+							<input type="text" class="form-control" id="updateJqbmTime"  name="jqbmTime" readonly="readonly" />
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label  class="col-sm-2 control-label">结果(物表)(治疗室1)</label>
+						<div class="col-sm-4">
+							<input type="text" class="form-control update"  name="zls1Result" id="updateZls1Result" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+						</div>
+						<label  class="col-sm-2 control-label">时间(物表)(治疗室1)</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateZls1Time" class="form-control"  name="zls1Time" readonly="readonly"/>
+						</div>
+					</div>
+
+
+
+
+					<div class="form-group">
+						<label  class="col-sm-2 control-label">结果(物表)(治疗室2)</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateZls2Result" class="form-control update"  name="zls2Result" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+						</div>
+						<label  class="col-sm-2 control-label">时间(物表)(治疗室2)</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateZls2Time" class="form-control"  name="zls2Time" readonly="readonly"/>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label  class="col-sm-2 control-label">结果(反渗水A)(热源数)</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateFssaRysResult" class="form-control update"  name="fssaRysResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+						</div>
+						<label  class="col-sm-2 control-label">时间(反渗水A)(热源数)</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateFssaRysTime" class="form-control"  name="fssaRysTime" readonly="readonly"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label  class="col-sm-2 control-label">结果(反渗水A)(细菌数)</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateFssaXjsResult" class="form-control update"  name="fssaXjsResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+						</div>
+						<label  class="col-sm-2 control-label">时间(反渗水A)(细菌数)</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateFssaXjsTime" class="form-control"  name="fssaXjsTime" readonly="readonly"/>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label  class="col-sm-2 control-label">结果(反渗水B)(热源数)</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateFssbRysResult" class="form-control update"  name="fssbRysResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+						</div>
+						<label  class="col-sm-2 control-label">时间(反渗水B)(热源数)</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateFssbRysTime" class="form-control"  name="fssbRysTime" readonly="readonly"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label  class="col-sm-2 control-label">结果(反渗水B)(细菌数)</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateFssbXjsResult" class="form-control update"  name="fssbXjsResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+						</div>
+						<label  class="col-sm-2 control-label">时间(反渗水B)(细菌数)</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateFssbXjsTime" class="form-control"  name="fssbXjsTime" readonly="readonly"/>
+						</div>
+					</div>
+
+					<div style="border-style: ridge;padding:10px;">
+
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<div class="input-group">
+									<div class="input-group-btn">
+										<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span id="updateTxySpan1" >J1</span> <span class="caret"></span></button>
+										<ul class="dropdown-menu" id="updateTxyListUl1">
+											<li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+										</ul>
+									</div>
+									<input type="text" class="form-control update" aria-label="..." id="updateTxyaRysResult" name="txyaRysResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+								</div>
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxyaRysTime" class="form-control"  name="txyaRysTime" readonly="readonly"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxyaXjsResult" class="form-control update"  name="txyaXjsResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxyaXjsTime" class="form-control"  name="txyaXjsTime" readonly="readonly"/>
+							</div>
+						</div>
+					</div>
+					</br>
+
+
+					<div style="border-style: ridge;padding:10px;">
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<div class="input-group">
+									<div class="input-group-btn">
+										<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span id="updateTxySpan2" >J1</span> <span class="caret"></span></button>
+										<ul class="dropdown-menu" id="updateTxyListUl2">
+											<li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+										</ul>
+									</div>
+									<input type="text" class="form-control update" aria-label="..." id="updateTxybRysResult" name="txybRysResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+								</div>
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxybRysTime" class="form-control"  name="txybRysTime" readonly="readonly"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxybXjsResult" class="form-control update"  name="txybXjsResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxybXjsTime" class="form-control"  name="txybXjsTime" readonly="readonly"/>
+							</div>
+						</div>
+					</div>
+					</br>
+
+					<div style="border-style: ridge;padding:10px;">
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<div class="input-group">
+									<div class="input-group-btn">
+										<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span id="updateTxySpan3" >J1</span> <span class="caret"></span></button>
+										<ul class="dropdown-menu" id="updateTxyListUl3">
+											<li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+										</ul>
+									</div>
+									<input type="text" id="updateTxycRysResult" name="txycRysResult" class="form-control update" aria-label="..." onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+								</div>
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxycRysTime" class="form-control"  name="txycRysTime" readonly="readonly"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxycXjsResult" class="form-control update"  name="txycXjsResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxycXjsTime" class="form-control"  name="txycXjsTime" readonly="readonly"/>
+							</div>
+						</div>
+					</div>
+					</br>
+
+					<div style="border-style: ridge;padding:10px;">
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<div class="input-group">
+									<div class="input-group-btn">
+										<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span id="updateTxySpan4" >J1</span> <span class="caret"></span></button>
+										<ul class="dropdown-menu" id="updateTxyListUl4">
+											<li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+										</ul>
+									</div>
+									<input type="text" id="updateTxydRysResult" name="txydRysResult" class="form-control update" aria-label="..." onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+								</div>
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxydRysTime" class="form-control"  name="txydRysTime" readonly="readonly"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxydXjsResult" class="form-control update"  name="txydXjsResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxydXjsTime" class="form-control"  name="txydXjsTime" readonly="readonly"/>
+							</div>
+						</div>
+					</div>
+					</br>
+
+					<div style="border-style: ridge;padding:10px;">
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<div class="input-group">
+									<div class="input-group-btn">
+										<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span id="updateTxySpan5" >J1</span> <span class="caret"></span></button>
+										<ul class="dropdown-menu" id="updateTxyListUl5">
+											<li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+										</ul>
+									</div>
+									<input type="text" id="updateTxyeRysResult" name="txyeRysResult" class="form-control update" aria-label="..." onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+								</div>
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxyeRysTime" class="form-control"  name="txyeRysTime" readonly="readonly"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxyeXjsResult" class="form-control update"  name="txyeXjsResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxyeXjsTime" class="form-control"  name="txyeXjsTime" readonly="readonly"/>
+							</div>
+						</div>
+					</div>
+					</br>
+
+					<div style="border-style: ridge;padding:10px;">
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<div class="input-group">
+									<div class="input-group-btn">
+										<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span id="updateTxySpan6" >J1</span> <span class="caret"></span></button>
+										<ul class="dropdown-menu" id="updateTxyListUl6">
+											<li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+										</ul>
+									</div>
+									<input type="text" id="updateTxyfRysResult" name="txyfRysResult" class="form-control update" aria-label="..." onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+								</div>
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxyfRysTime" class="form-control"  name="txyfRysTime" readonly="readonly"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxyfXjsResult" class="form-control update"  name="txyfXjsResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxyfXjsTime" class="form-control"  name="txyfXjsTime" readonly="readonly"/>
+							</div>
+						</div>
+					</div>
+					</br>
+
+					<div style="border-style: ridge;padding:10px;">
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<div class="input-group">
+									<div class="input-group-btn">
+										<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span id="updateTxySpan7" >J1</span> <span class="caret"></span></button>
+										<ul class="dropdown-menu" id="updateTxyListUl7">
+											<li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+										</ul>
+									</div>
+									<input type="text" id="updateTxygRysResult" name="txygRysResult" class="form-control update" aria-label="..." onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+								</div>
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxygRysTime" class="form-control"  name="txygRysTime" readonly="readonly"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxygXjsResult" class="form-control update"  name="txygXjsResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxygXjsTime" class="form-control"  name="txygXjsTime" readonly="readonly"/>
+							</div>
+						</div>
+					</div>
+					</br>
+
+					<div style="border-style: ridge;padding:10px;">
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<div class="input-group">
+									<div class="input-group-btn">
+										<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span id="updateTxySpan8" >J1</span> <span class="caret"></span></button>
+										<ul class="dropdown-menu" id="updateTxyListUl8">
+											<li th:each="str:${txyList}"><a href="#"><span th:text="${str}"></span></a></li>
+										</ul>
+									</div>
+									<input type="text" id="updateTxyhRysResult" name="txyhRysResult" class="form-control update" aria-label="..." onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+								</div>
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(热源数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxyhRysTime" class="form-control"  name="txyhRysTime" readonly="readonly"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label  class="col-sm-2 control-label">结果(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxyhXjsResult" class="form-control update"  name="txyhXjsResult" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+							</div>
+							<label  class="col-sm-2 control-label">时间(透析液)(细菌数)</label>
+							<div class="col-sm-4">
+								<input type="text" id="updateTxyhXjsTime" class="form-control"  name="txyhXjsTime" readonly="readonly"/>
+							</div>
+						</div>
+					</div>
+					</br>
+
+
+					<div class="form-group">
+						<label  class="col-sm-2 control-label">初查采样人</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateCccyr" class="form-control update"  name="cccyr" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+						</div>
+						<label  class="col-sm-2 control-label">复查采样人</label>
+						<div class="col-sm-4">
+							<input type="text" id="updateFccyr" class="form-control update"  name="fccyr" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+						</div>
+					</div>
+
+
+					<div class="form-group">
+						<label  class="col-sm-2 control-label">备注</label>
+						<div class="col-sm-10">
+							<textarea class="form-control update" id="updateRemark" name="remark" onkeypress="if(event.keyCode==13) focusNextInput2(this);"></textarea>
+						</div>
+
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal"><span class='glyphicon glyphicon-remove' aria-hidden='true'></span> 关闭</button>
+				<button type="button" id="updateClick" class="btn btn-primary"><span class='glyphicon glyphicon-ok' aria-hidden='true'></span> 保存</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div style="position: fixed; bottom:0; left:37%">Copyright© <span th:text="${nowYear}"></span> 华脉汇百通信息技术（北京）有限公司</div>
+
+</body>
+</html>

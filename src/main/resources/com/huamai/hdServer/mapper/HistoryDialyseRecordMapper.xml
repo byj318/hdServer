@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- A浓缩液配置记录  mapper文件  用于书写复杂sql -->
+<mapper namespace="com.huamai.hdServer.mapper.HistoryDialyseRecordMapper">
+    <select id="statisticsBfz" resultType="java.lang.String" >
+        SELECT replace( SYMPTOM, '，', ',' )
+        FROM HistoryDialyseRecord
+        WHERE Del_Mark = 0
+        AND SYMPTOM IS NOT NULL
+        AND SYMPTOM != ''
+        AND SYMPTOM != '0'
+        AND CureTime &gt;= #{startTime}
+        AND CureTime &lt;= #{endTime}
+        <if test='courtyardArea != 0'>
+            AND ( SELECT TOP 1 hospital_id FROM Patientzg WHERE Patient_ID = HistoryDialyseRecord.PatientID AND Date_time &lt; HistoryDialyseRecord.CureTime ORDER BY Date_time DESC ) = #{courtyardArea}
+        </if>
+    </select>
+
+    <select id="listPatientInfo" resultType="java.util.Map" >
+        SELECT p.name,CASE WHEN p.sex = 740 THEN '男' WHEN p.sex = 741 THEN '女' ELSE '未填' END gender,p.IdentityCard,p.CaseCode,SYMPTOM,CONVERT(varchar(100), CureTime, 23)CureTime FROM (
+        SELECT
+        PatientID,SYMPTOM,CureTime
+        FROM
+        HistoryDialyseRecord
+        WHERE
+        Del_Mark = 0
+        AND SYMPTOM IS NOT NULL
+        AND SYMPTOM != ''
+        AND SYMPTOM != '0'
+        <choose>
+        <when  test='type != "其他"'>
+            AND SYMPTOM LIKE '%'+#{type}+'%'
+        </when >
+        <otherwise>
+            AND SYMPTOM NOT IN
+            <foreach item="item" index="index" collection="dictoryList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </otherwise>
+        </choose>
+        AND CureTime &gt;= #{startTime}
+        AND CureTime &lt;= #{endTime}
+        <if test='courtyardArea != 0'>
+            AND ( SELECT TOP 1 hospital_id FROM Patientzg WHERE Patient_ID = HistoryDialyseRecord.PatientID AND Date_time &lt; HistoryDialyseRecord.CureTime ORDER BY Date_time DESC ) = #{courtyardArea}
+        </if>
+        )aa INNER JOIN Patient p ON(aa.PatientID = p.id)
+    </select>
+
+    <select id="statisticsYsjb" resultType="java.util.Map" >
+        SELECT
+        p.name,
+        CASE
+
+        WHEN p.sex = 740 THEN
+        '男'
+        WHEN p.sex = 741 THEN
+        '女' ELSE '未填'
+        END gender,
+        p.IdentityCard,
+        p.CaseCode,
+        YiShengZongJie,CASE WHEN Yisheng IS NULL THEN '' ELSE Yisheng END Yisheng,
+        setuptime,CASE WHEN DefineName IS NULL THEN '' ELSE  DefineName END DefineName
+        FROM
+        (
+        SELECT
+        YiShengZongJie,
+        Patient_ID,Yisheng,
+        CONVERT ( VARCHAR ( 100 ), setuptime, 23 ) setuptime
+        FROM
+        DialyseRecord
+        WHERE
+        jiaobanY = 1
+        AND SetupTime &gt;= #{startTime}
+        AND SetupTime &lt;= #{endTime}
+        AND Del_Mark = 0
+        <if test='courtyardArea != 0'>
+            AND ( SELECT TOP 1 hospital_id FROM Patientzg WHERE Patient_ID = DialyseRecord.Patient_ID AND Date_time &lt; DialyseRecord.SetupTime ORDER BY Date_time DESC ) = #{courtyardArea}
+        </if>
+        ) aa
+        INNER JOIN Patient p ON ( aa.Patient_ID = p.id )
+        LEFT JOIN (
+        SELECT
+        Patient_ID,
+        DefineName = stuff(
+        ( SELECT ',' + [DefineName] FROM Diagnose t WHERE t.Patient_ID = Diagnose.Patient_ID FOR xml path ( '' ) ),
+        1,
+        1,
+        ''
+        )
+        FROM
+        Diagnose
+        WHERE
+        CurMark = 1
+        AND Del_Mark = 0
+        GROUP BY
+        Patient_ID
+        ) bb ON ( aa.Patient_ID = bb.patient_id )
+        ORDER BY
+        SetupTime DESC
+    </select>
+
+    <select id="statisticsHsjb" resultType="java.util.Map" >
+        SELECT
+        p.name,
+        CASE
+
+        WHEN p.sex = 740 THEN
+        '男'
+        WHEN p.sex = 741 THEN
+        '女' ELSE '未填'
+        END gender,
+        p.IdentityCard,
+        p.CaseCode,
+        HuShiZongJie,CASE WHEN ZHushi IS NULL THEN '' ELSE ZHushi END ZHushi,
+        setuptime,CASE WHEN DefineName IS NULL THEN '' ELSE  DefineName END DefineName
+        FROM
+        (
+        SELECT
+        HuShiZongJie,
+        Patient_ID,ZHushi,
+        CONVERT ( VARCHAR ( 100 ), setuptime, 23 ) setuptime
+        FROM
+        DialyseRecord
+        WHERE
+        jiaoban = 1
+        AND SetupTime &gt;= #{startTime}
+        AND SetupTime &lt;= #{endTime}
+        AND Del_Mark = 0
+        <if test='courtyardArea != 0'>
+            AND ( SELECT TOP 1 hospital_id FROM Patientzg WHERE Patient_ID = DialyseRecord.Patient_ID AND Date_time &lt; DialyseRecord.SetupTime ORDER BY Date_time DESC ) = #{courtyardArea}
+        </if>
+        ) aa
+        INNER JOIN Patient p ON ( aa.Patient_ID = p.id )
+        LEFT JOIN (
+        SELECT
+        Patient_ID,
+        DefineName = stuff(
+        ( SELECT ',' + [DefineName] FROM Diagnose t WHERE t.Patient_ID = Diagnose.Patient_ID FOR xml path ( '' ) ),
+        1,
+        1,
+        ''
+        )
+        FROM
+        Diagnose
+        WHERE
+        CurMark = 1
+        AND Del_Mark = 0
+        GROUP BY
+        Patient_ID
+        ) bb ON ( aa.Patient_ID = bb.patient_id )
+        ORDER BY
+        SetupTime DESC
+    </select>
+</mapper>

@@ -1,0 +1,203 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <title>医生交班</title>
+
+	<link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link href="/toastr/build/toastr.min.css" rel="stylesheet">
+    <link href="/bootstrap/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
+    <script type="text/javascript" src="/js/jquery-1.8.3.min.js"></script>
+	<script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/datatables.min.js"></script>
+	<script type="text/javascript" src="/toastr/build/toastr.min.js"></script>
+    <script type="text/javascript" src="/js/base.js"></script>
+	<script type="text/javascript" src="/bootstrap/js/bootstrap-datetimepicker.js" charset="UTF-8"></script>
+	<script type="text/javascript" src="/bootstrap/js/bootstrap-datetimepicker.zh-CN.js" charset="UTF-8"></script>
+    <script type="text/javascript" src="/js/base.js"></script>
+    <script type="text/javascript">
+    	$(function(){
+    		createTableFirst();
+    		$("#gjzbtjSelect").unbind("change");
+			$('#gjzbtjSelect').bind('change',function(e){
+				dd.ajax.url('/statistics/getYsjbData?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&courtyardArea='+$('#gjzbtjSelect option:selected').val()).load();
+			});
+    	});
+
+
+ var lang = {
+"sProcessing": "<img src='/images/loading.gif'><b>处理中...</b>",
+"sLengthMenu": "每页 _MENU_ 项",
+"sZeroRecords": "没有匹配结果",
+"sInfo": "当前显示第 _START_ 至 _END_ 项，共 _TOTAL_ 项。",
+"sInfoEmpty": "当前显示第 0 至 0 项，共 0 项",
+"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+"sInfoPostFix": "",
+"sSearch": "搜索:",
+"sUrl": "",
+"sEmptyTable": "表中数据为空",
+"sLoadingRecords": "载入中...",
+"sInfoThousands": ",",
+"oPaginate": {
+	"sFirst": "首页",
+	"sPrevious": "上页",
+	"sNext": "下页",
+	"sLast": "末页",
+	"sJump": "跳转"
+},
+"oAria": {
+	"sSortAscending": ": 以升序排列此列",
+	"sSortDescending": ": 以降序排列此列"
+}
+};
+var dd;
+function createTableFirst(){
+            dd = $("#listExample").dataTable({
+                language:lang,  //提示信息
+                autoWidth: false,  //禁用自动调整列宽
+                stripeClasses: ["odd", "even"],  //为奇偶行加上样式，兼容不支持CSS伪类的场合
+                processing: true,  //隐藏加载提示,自行处理
+                searching: false,  //禁用原生搜索
+                orderMulti: true,  //启用多列排序
+                ordering: true,
+                destroy:false,
+                order: [],  //取消默认排序查询,否则复选框一列会出现小箭头
+                renderer: "bootstrap",  //渲染样式：Bootstrap和jquery-ui
+                pagingType: "full_numbers",  //分页样式：simple,simple_numbers,full,full_numbers
+                columnDefs: [{
+                    "targets": 'nosort',  //列的样式名
+                    "orderable": false    //包含上样式名‘nosort’的禁止排序
+                }],
+                ajax: '/statistics/getYsjbData?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&courtyardArea='+$('#gjzbtjSelect option:selected').val(),
+                //列表表头字段
+                columns: [
+                	{"data": "name","width":"6%"},
+                	{"data": "gender","width":"6%"},
+    	            {"data": "IdentityCard","width":"8%"},
+    	            {"data": "CaseCode","width":"8%"},
+    	            {"data": "DefineName","width":"26%"},
+    	            {"data": "YiShengZongJie","width":"30%"},
+    	            {"data": "setuptime","width":"8%"},
+    	            {"data": "Yisheng","width":"8%"}
+                ]
+            }).api(); //此处需调用api()方法,否则返回的是JQuery对象而不是DataTables的API对象
+			$("#listExample_length").append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id='export' class='btn btn-primary'><span class='glyphicon glyphicon-export' aria-hidden='true'></span> 导出</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;起始日期:<input id='startTime' name='startTime' type='text' style='width:130px' readonly/>&nbsp;&nbsp;&nbsp;结束日期:<input id='endTime' name='endTime' type='text' style='width:130px' readonly/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id='search' class='btn btn-info'><span class='glyphicon glyphicon-search' aria-hidden='true'></span> 搜索</button>");
+            $('#startTime').datetimepicker({
+				language: 'zh-CN', //汉化
+				format:"yyyy-mm-dd",
+				 weekStart: 1,
+			     todayBtn:  1,
+				 autoclose: 1,
+				 todayHighlight: 1,
+				 startView: 2,
+				 minView: 2,
+				 forceParse: 0
+		    });
+            $('#endTime').datetimepicker({
+				language: 'zh-CN', //汉化
+				format:"yyyy-mm-dd",
+				 weekStart: 1,
+			     todayBtn:  1,
+				 autoclose: 1,
+				 todayHighlight: 1,
+				 startView: 2,
+				 minView: 2,
+				 forceParse: 0
+		    });
+			var date = new Date();
+			var year = date.getFullYear();    //获取完整的年份(4位,1970-????)
+			var month = date.getMonth()+1;       //获取当前月份(0-11,0代表1月)
+			if(month < 10){
+				month = '0' + month;
+			}
+			var day = date.getDate();        //获取当前日(1-31)
+			if(day < 10){
+				day = '0' + day;
+			}
+			$('#startTime').val(year+'-01'+'-01');
+			$('#endTime').val(year+'-'+month+'-'+day);
+
+			$("#startTime").unbind("change");
+    		$("#startTime").bind("change",function(){
+    			dd.ajax.url('/statistics/getYsjbData?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&courtyardArea='+$('#gjzbtjSelect option:selected').val()).load();
+    		});
+
+    		$("#endTime").unbind("change");
+    		$("#endTime").bind("change",function(){
+    			dd.ajax.url('/statistics/getYsjbData?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&courtyardArea='+$('#gjzbtjSelect option:selected').val()).load();
+    		});
+
+			$("#search").unbind("click");
+			$('#search').bind('click',function(e){
+				dd.ajax.url('/statistics/getYsjbData?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&courtyardArea='+$('#gjzbtjSelect option:selected').val()).load();
+			});
+
+			$('#export').unbind('click');
+			$('#export').bind('click',function(e){
+				var url = '/statistics/exportExcelYsjb?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&courtyardArea='+$('#gjzbtjSelect option:selected').val();
+    			window.location.href = url;
+			});
+
+};
+
+
+</script>
+    <link rel="stylesheet" type="text/css" href="/css/datatables.min.css">
+    <style type="text/css">
+    	td.details-control {
+    background: url('/css/DataTables-1.10.18/images/edit_add.png') no-repeat center center;
+    cursor: pointer;
+		}
+		tr.details td.details-control {
+		    background: url('/css/DataTables-1.10.18/images/cancel.png') no-repeat center center;
+		}
+			
+	td.highlight {
+	    background-color: whitesmoke !important;
+	}
+	h2{
+		text-align:center
+	}
+	th {
+	    text-align: center;
+	}
+	td {
+	    text-align: center;
+	}
+	#listExample tbody tr td:nth-of-type(5){
+		font-size: 12px;
+	}
+	#listExample tbody tr td:nth-of-type(6){
+		font-size: 12px;
+	}
+
+    </style>
+</head>
+<body>
+<input type="hidden" th:value="${courtyardArea}" id="courtyardArea"/>
+<input type="hidden" th:value="${loginName}" id="loginName"/>
+<h2>医生交班</h2>
+<select class="form-control" style="width:auto" id="gjzbtjSelect"><option value="0">全院</option><option value="1">新院</option><option value="2">老院</option></select>
+<div>
+	<table id="listExample" class="display" style="width:100%">
+		<thead>
+		<tr>
+			<th>姓名</th>
+			<th>性别</th>
+			<th>身份证</th>
+			<th>病历本号</th>
+			<th>诊断</th>
+			<th>病情记录</th>
+			<th>时间</th>
+			<th>医生签名</th>
+		</tr>
+		</thead>
+	</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div style="position: fixed; bottom:0; left:37%">Copyright© <span th:text="${nowYear}"></span> 华脉汇百通信息技术（北京）有限公司</div>
+
+</body>
+</html>

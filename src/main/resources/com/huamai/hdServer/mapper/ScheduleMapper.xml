@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 仪表及触摸屏设定记录  mapper文件  用于书写复杂sql -->
+<mapper namespace="com.huamai.hdServer.mapper.ScheduleMapper">
+    <select id="getScreen1" resultType="com.huamai.hdServer.domain.ScreenVO">
+        SELECT
+        banci,
+        dialysis_type,
+        bedcode,
+        name,
+        shangjishijian,
+        xiajishijian,
+        (
+        CASE
+        WHEN xiajishijian = '' THEN
+        0
+        WHEN xiajishijian IS NULL THEN
+        0
+        WHEN CONVERT(CHAR(5),GETDATE(),108) >= xiajishijian THEN
+        1
+        ELSE 0
+        END
+        )state
+        FROM (
+        select #{banci} banci ,di.ItemName dialysis_type,b.bedcode,p.name,dr.shangjishijian,(case when dr.shangjishijian='' then null when dr.shangjishijian is null then null else dateadd(MINUTE,cast(ds.hourage as float)*60,dr.shangjishijian) end) xiajishijian from PatientSchedule ps inner join bed b on ps.bed_id=b.id inner join patient p on ps.patient_id=p.id left outer join DialyseSchemeSub dss on dss.id=ps.SubScheme_ID left outer join DictionaryItem di on di.id=dss.DialyseType left outer join DializerClass dc on dc.id=dss.DialyzerClassID left outer join DialyseScheme ds on ds.id=ps.Scheme_ID left outer join DictionaryItem di2 on di2.id=ds.HeparineType left join dialyseRecord dr on dr.patient_id = ps.patient_id and convert(varchar,dr.setuptime,23)=convert(varchar,getdate(),23)  where row_id in(select id from RowSchedule where schedule_id= #{scheduleId} and sequence = #{sequence}) and p.name is not null
+    )aa
+    </select>
+
+    <select id="getScreen2" resultType="com.huamai.hdServer.domain.ScreenVO">
+        SELECT
+        banci,
+        dialysis_type,
+        bedcode,
+        name,
+        shangjishijian,
+        xiajishijian,
+        (
+        CASE
+        WHEN xiajishijian = '' THEN
+        0
+        WHEN xiajishijian IS NULL THEN
+        0
+        WHEN CONVERT(CHAR(5),GETDATE(),108) >= xiajishijian THEN
+        1
+        ELSE 0
+        END
+        )state
+        FROM (
+        select  #{banci} banci,di.ItemName dialysis_type,b.bedcode,p.name,dr.shangjishijian,(case when dr.shangjishijian='' then null when dr.shangjishijian is null then null else dateadd(MINUTE,cast(ds.hourage as float)*60,dr.shangjishijian) end)xiajishijian from PatientScheduleExec ps inner join bed b on ps.bed_id=b.id and convert(varchar,executetime,23)=#{date} left join patient p on ps.patient_id=p.id left outer join DialyseSchemeSub dss on dss.id=ps.SubScheme_ID left outer join DictionaryItem di on di.id=dss.DialyseType left outer join DializerClass dc on dc.id=dss.DialyzerClassID left outer join DialyseScheme ds on ds.id=ps.Scheme_ID left outer join DictionaryItem di2 on di2.id=ds.HeparineType  left join dialyseRecord dr on dr.patient_id = ps.patient_id and convert(varchar,dr.setuptime,23)=convert(varchar,getdate(),23)   where RowScheduleExec_id in(select id from RowScheduleExec where convert(varchar(10),executetime,120)= #{date} and sequence= #{sequence}) and p.name is not null and dr.shangjishijian is not null  )aa   </select>
+
+    <select id="getScreen3" resultType="com.huamai.hdServer.domain.ScreenVO">
+        SELECT
+        banci,
+        dialysis_type,
+        bedcode,
+        name,
+        shangjishijian,
+        xiajishijian,
+        (
+        CASE
+        WHEN xiajishijian = '' THEN
+        0
+        WHEN xiajishijian IS NULL THEN
+        0
+        WHEN CONVERT(CHAR(5),GETDATE(),108) >= xiajishijian THEN
+        1
+        ELSE 0
+        END
+        )state
+        FROM (
+        select #{banci} banci,di.ItemName dialysis_type,b.bedcode,p.name,dr.shangjishijian,(case when dr.shangjishijian='' then null when dr.shangjishijian is null then null else dateadd(MINUTE,cast(ds.hourage as float)*60,dr.shangjishijian) end)xiajishijian,(case when dr.XiaJiShiJian='' then 0 when dr.XiaJiShiJian is null  then 0 else 1 end)state from PatientScheduleTempExec ps inner join bed b on ps.bed_id=b.id and convert(varchar,exec_time,23)=#{date} left join patient p on ps.patient_id=p.id left outer join DialyseSchemeSub dss on dss.id=ps.SubScheme_ID left outer join DictionaryItem di on di.id=dss.DialyseType left outer join DializerClass dc on dc.id=dss.DialyzerClassID left outer join DialyseScheme ds on ds.id=ps.Scheme_ID left outer join DictionaryItem di2 on di2.id=ds.HeparineType left join dialyseRecord dr on dr.patient_id = ps.patient_id and convert(varchar,dr.setuptime,23)=convert(varchar,getdate(),23)  where ps.id in (select max(id) from patientscheduletempexec where convert(varchar(10),exec_time,120)= #{date} and schedule_id= #{scheduleId} and sequence = #{sequence} group by bed_id) and p.name is not null and dr.shangjishijian is not null)aa  </select>
+</mapper>

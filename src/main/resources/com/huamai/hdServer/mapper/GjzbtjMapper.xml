@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 关键指标统计 mapper文件  用于书写复杂sql -->
+<mapper namespace="com.huamai.hdServer.mapper.GjzbtjMapper">
+
+
+	<select id="listObjects2" resultType="com.huamai.hdServer.domain.Gjzb">
+		select aa.patient_id patientId,
+		val
+		FROM
+		(
+		SELECT
+		aa.patient_id
+		FROM
+		(
+		SELECT
+		patient_id,
+		changestatus,
+		changetime,
+		ROW_NUMBER () OVER (
+		PARTITION BY patient_id
+		ORDER BY
+		changetime DESC
+		) AS rownum
+		FROM
+		outcome
+		WHERE
+		(del_mark = 0 or del_mark is null)
+		<if test="endTime != null">
+			AND changetime &lt;= #{endTime}
+		</if>
+		AND patient_id NOT IN (
+		SELECT
+		patient_id
+		FROM
+		Diagnose
+		WHERE
+		(del_mark IS NULL OR del_mark = 0)
+		AND (
+		DefineName LIKE '急性%'
+		OR DefineName LIKE '%中毒%'
+		OR DefineName LIKE '%AKI%'
+		OR DefineName LIKE '%ARF%'
+		)
+		)
+		) aa
+		INNER JOIN patient p ON (aa.patient_id = p.id)
+		WHERE
+		aa.rownum = 1
+		AND aa.changestatus = 798
+		AND datediff(
+		DAY,
+		changetime,
+		#{endTime}
+		) >= 90
+		AND p.del_mark = 0
+		AND datediff(
+		DAY,
+		p.firstdialysetime,
+		#{endTime}
+		) >= 90
+		<if test="hospitalId != 3">
+		AND p.hospital_id = #{hospitalId}
+		</if>
+		) aa
+		INNER JOIN (
+		SELECT
+		patient_id,
+		AVG(val) val
+		FROM
+		(
+		SELECT
+		sfrq,
+		patient_id,
+		val,
+		ROW_NUMBER () OVER (
+		PARTITION BY patient_id
+		ORDER BY
+		sfrq DESC
+		) AS rownum
+		FROM
+		(
+		SELECT
+		s.terms2 sfrq,CONVERT (VARCHAR(7), s.terms2, 120) ny,
+		s.patient_id,
+		CAST (c. VALUE AS FLOAT) val
+		FROM
+		panels s
+		INNER JOIN components c ON c.panels_id = s.id
+		WHERE
+		c.componentdef_id = #{componentdefId}
+		AND ISNUMERIC(c.value) = 1
+		<if test="startTime != null">
+			AND terms2 >= #{startTime}
+		</if>
+		<if test="endTime != null">
+			AND terms2 &lt;= #{endTime}
+		</if>
+		<if test="minValue != null">
+			AND CAST (c. VALUE AS FLOAT) >= #{minValue}
+		</if>
+		AND CAST (c. VALUE AS FLOAT) &lt;= #{maxValue}
+		) aa
+		) bb
+		WHERE
+		bb.rownum = 1 GROUP BY patient_Id
+		) bb ON (
+		aa.patient_id = bb.patient_id
+		)
+	</select>
+
+	<select id="listXgtls2" resultType="com.huamai.hdServer.domain.Xgtl">
+
+		SELECT
+		aa.patient_id patientId,VesselRouteType val
+		FROM
+		(
+		SELECT
+		aa.patient_id
+		FROM
+		(
+		SELECT
+		patient_id,
+		changestatus,
+		changetime,
+		ROW_NUMBER () OVER (
+		PARTITION BY patient_id
+		ORDER BY
+		changetime DESC
+		) AS rownum
+		FROM
+		outcome
+		WHERE
+		(del_mark = 0 or del_mark is null)
+		AND changetime &lt;= #{endTime}
+		AND patient_id NOT IN (
+		SELECT
+		patient_id
+		FROM
+		Diagnose
+		WHERE
+		(del_mark IS NULL OR del_mark = 0)
+		AND (
+		DefineName LIKE '急性%'
+		OR DefineName LIKE '%中毒%'
+		OR DefineName LIKE '%AKI%'
+		OR DefineName LIKE '%ARF%'
+		)
+		)
+		) aa
+		INNER JOIN patient p ON (aa.patient_id = p.id)
+		WHERE
+		aa.rownum = 1
+		AND aa.changestatus = 798
+		AND datediff(
+		DAY,
+		changetime,
+		#{endTime}
+		) >= 90
+		AND p.del_mark = 0
+		AND datediff(
+		DAY,
+		p.firstdialysetime,
+		#{endTime}
+		) >= 90
+		<if test="hospitalId != 3">
+		AND p.hospital_id = #{hospitalId}
+		</if>
+		) aa
+		INNER JOIN (
+		SELECT
+		patient_id,
+		VesselRouteType
+		FROM
+		(
+		SELECT
+		patient_id,
+		(
+		SELECT
+		itemname
+		FROM
+		DictionaryItem
+		WHERE
+		DictionaryTableID = 148
+		AND id = VesselRouteType
+		) VesselRouteType,
+		(
+		SELECT
+		itemname
+		FROM
+		DictionaryItem
+		WHERE
+		DictionaryTableID = 149
+		AND id = VesselRouteSort
+		) VesselRouteSort,
+		SetupTime,
+		UseTime,
+		ROW_NUMBER () OVER (
+		PARTITION BY patient_id
+		ORDER BY
+		UseTime DESC
+		) AS rownum
+		FROM
+		DialyseRoute
+		WHERE
+		Del_Mark = 0
+		AND (
+		CASE
+		WHEN (
+		(
+		(
+		CurrentMark = '1'
+		AND (
+		StopTime IS NULL
+		OR StopTime = ''
+		)
+		)
+		AND (
+		StopTime IS NULL
+		OR StopTime = ''
+		)
+		)
+		OR (
+		(
+		CurrentMark IS NULL
+		OR CurrentMark = ''
+		OR CurrentMark = '0'
+		)
+		AND (
+		StopTime IS NULL
+		OR StopTime = ''
+		)
+		)
+		) THEN
+		1
+		ELSE
+		0
+		END
+		) = 1
+		) aa
+		WHERE
+		aa.rownum = 1
+		) bb ON (
+		aa.patient_id = bb.patient_id
+		)
+	</select>
+
+	<select id="getXgtlPatientinfo" resultType="com.huamai.hdServer.domain.GjzbPatientTj">
+		SELECT
+		name,
+		casecode,
+		identitycard,
+		firstdialysetime,
+		sfrq,
+		val,case when hospital_id = 1 then '新院' when hospital_id = 2 then '老院' else '' end hospitalId
+		FROM
+		(
+		SELECT
+		patient_id,
+		VesselRouteType val,
+		CONVERT (VARCHAR(100), usetime, 23) sfrq
+		FROM
+		(
+		SELECT
+		patient_id,
+		(
+		SELECT
+		itemname
+		FROM
+		DictionaryItem
+		WHERE
+		DictionaryTableID = 148
+		AND id = VesselRouteType
+		) VesselRouteType,
+		(
+		SELECT
+		itemname
+		FROM
+		DictionaryItem
+		WHERE
+		DictionaryTableID = 149
+		AND id = VesselRouteSort
+		) VesselRouteSort,
+		SetupTime,
+		UseTime,
+		ROW_NUMBER () OVER (
+		PARTITION BY patient_id
+		ORDER BY
+		UseTime DESC
+		) AS rownum
+		FROM
+		DialyseRoute
+		WHERE
+		Del_Mark = 0
+		AND patient_id IN <foreach collection="patientIdList" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+		AND (
+		CASE
+		WHEN (
+		(
+		(
+		CurrentMark = '1'
+		AND (
+		StopTime IS NULL
+		OR StopTime = ''
+		)
+		)
+		AND (
+		StopTime IS NULL
+		OR StopTime = ''
+		)
+		)
+		OR (
+		(
+		CurrentMark IS NULL
+		OR CurrentMark = ''
+		OR CurrentMark = '0'
+		)
+		AND (
+		StopTime IS NULL
+		OR StopTime = ''
+		)
+		)
+		) THEN
+		1
+		ELSE
+		0
+		END
+		) = 1
+		) aa
+		WHERE
+		aa.rownum = 1
+		) a
+		INNER JOIN (
+		SELECT
+		id,
+		casecode,
+		name,
+		identitycard,
+		CONVERT (
+		VARCHAR (100),
+		firstdialysetime,
+		23
+		) firstdialysetime,hospital_id
+		FROM
+		patient WHERE id IN <foreach collection="patientIdList" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+		) b ON (a.patient_id = b.id) ORDER BY name
+	</select>
+
+	<select id="getHy" resultType="com.huamai.hdServer.domain.Gjzb">
+		SELECT
+		patient_id,
+		CONVERT (VARCHAR(100), sfrq, 23) + ': ' + CAST (val AS VARCHAR(20)) value
+		FROM
+		(
+		SELECT
+		sfrq,
+		patient_id,
+		val,
+		ROW_NUMBER () OVER (
+		PARTITION BY patient_id,
+		ny
+		ORDER BY
+		sfrq DESC
+		) AS rownum
+		FROM
+		(
+		SELECT
+		s.terms2 sfrq,
+		CONVERT (VARCHAR(7), s.terms2, 120) ny,
+		s.patient_id,
+		CAST (c. VALUE AS FLOAT) val
+		FROM
+		panels s
+		INNER JOIN components c ON c.panels_id = s.id
+		WHERE
+		c.componentdef_id = #{componentdefId}
+		AND ISNUMERIC(c.value) = 1
+		<if test="startTime != null">
+			AND terms2 >= #{startTime}
+		</if>
+		<if test="endTime != null">
+			AND terms2 &lt;= #{endTime}
+		</if>
+		AND s.patient_id in
+		<foreach collection="patientIdList" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+		<if test="minValue != null">
+			AND CAST (c. VALUE AS FLOAT) >= #{minValue}
+		</if>
+		AND CAST (c. VALUE AS FLOAT) &lt;= #{maxValue}
+		) aa
+		) bb
+		WHERE
+		bb.rownum = 1
+	</select>
+
+	<select id="getPatientinfo" resultType="com.huamai.hdServer.domain.GjzbPatientTj">
+		SELECT
+		id patientId,
+		casecode,
+		name,
+		identitycard,
+		CONVERT (
+		VARCHAR (100),
+		firstdialysetime,
+		23
+		) firstdialysetime,
+		CASE
+		WHEN hospital_id = 1 THEN
+		'新院'
+		WHEN hospital_id = 2 THEN
+		'老院'
+		ELSE
+		''
+		END hospitalId
+		FROM
+		patient
+		WHERE id IN <foreach collection="patientIdList" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+		order by name
+	</select>
+
+</mapper>

@@ -1,0 +1,1019 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <title th:text="${title}"></title>
+
+     <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link href="/toastr/build/toastr.min.css" rel="stylesheet">
+    <link href="/bootstrap/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
+    <script type="text/javascript" src="/js/jquery-1.8.3.min.js"></script>
+	<script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/datatables.min.js"></script>
+	<script type="text/javascript" src="/toastr/build/toastr.min.js"></script>
+    <script type="text/javascript" src="/js/base.js"></script>
+	<script type="text/javascript" src="/bootstrap/js/bootstrap-datetimepicker.js" charset="UTF-8"></script>
+	<script type="text/javascript" src="/bootstrap/js/bootstrap-datetimepicker.zh-CN.js" charset="UTF-8"></script>
+    <script type="text/javascript" src="/js/base.js"></script>
+	<script type="text/javascript" src="/js/sweetalert.min.js"></script>
+    <script type="text/javascript">
+    var dt;
+    var datas;
+    	$(function(){
+    		   //提示信息  初始化设置 一般不需要改
+    		
+            var lang = {
+                "sProcessing": "<img src='/images/loading.gif'><b>处理中...</b>",
+                "sLengthMenu": "每页 _MENU_ 项",
+                "sZeroRecords": "没有匹配结果",
+                "sInfo": "当前显示第 _START_ 至 _END_ 项，共 _TOTAL_ 项。",
+                "sInfoEmpty": "当前显示第 0 至 0 项，共 0 项",
+                "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+                "sInfoPostFix": "",
+                "sSearch": "搜索:",
+                "sUrl": "",
+                "sEmptyTable": "表中数据为空",
+                "sLoadingRecords": "载入中...",
+                "sInfoThousands": ",",
+                "oPaginate": {
+                    "sFirst": "首页",
+                    "sPrevious": "上页",
+                    "sNext": "下页",
+                    "sLast": "末页",
+                    "sJump": "跳转"
+                },
+                "oAria": {
+                    "sSortAscending": ": 以升序排列此列",
+                    "sSortDescending": ": 以降序排列此列"
+                }
+            };
+    		   
+    		   var columns;
+    		   var courtyardArea = $('#courtyardArea').val();
+    		   if(courtyardArea == '新院'){
+    			    columns = [
+                	{"data": "number"},
+    	            {"data": "rqsj"},
+    	            {"data": "ysyl"},
+    	            {"data": "sljk"},
+    	            {"data": "slck"},
+    	            {"data": "tlck"},
+    	            {"data": "rhck"},
+    	            {"data": "jlck"},
+    	            {"data": "yjmj"},
+    	            {"data": "yjnc"},
+    	            {"data": "ejbqy"},
+    	            {"data": "ejmj"},
+    	            {"data": "ejnc"},
+    	            {"data": "cshl"},
+    	            {"data": "rxdkssj"},
+    	            {"data": "rxdjssj"},
+    	            {"data":"hxxdkssj"},
+    	            {"data": "hxxdjssj"},
+    	            {"data": "yjmc"},
+    	            {"data": "yjnd"},
+    	            {"data": "yjyl"},
+    	            {"data": "cljc"},
+    	            {"data":"jly"}
+                ]; 
+    		   }else if(courtyardArea == '老院'){
+    			    columns = [
+                   	{"data": "number"},
+       	            {"data": "rqsj"},
+       	            {"data": "sljk"},
+       	            {"data": "slck"},
+       	            {"data": "tlck"},
+       	            {"data": "rhck"},
+       	            {"data": "jlck"},
+       	            {"data": "yjmj"},
+       	         	{"data": "ejmj"},
+       	            {"data": "ejbqy"},
+       	        	{"data": "yjnc"},
+       	            {"data": "ejnc"},
+       	            {"data": "cshl"},
+       	            {"data": "rxdkssj"},
+       	            {"data": "rxdjssj"},
+       	            {"data":"hxxdkssj"},
+       	            {"data": "hxxdjssj"},
+       	            {"data": "yjmc"},
+       	            {"data": "yjnd"},
+       	            {"data": "yjyl"},
+       	            {"data": "cljc"},
+       	            {"data":"jly"}
+                   ]; 
+    		   }
+    		   
+          //重要修改 表格内容的自定义，需要根据业务定制
+            dt = $("#scljbywhjlExample").dataTable({
+                language:lang,  //提示信息
+                autoWidth: false,  //禁用自动调整列宽
+                stripeClasses: ["odd", "even"],  //为奇偶行加上样式，兼容不支持CSS伪类的场合
+                processing: true,  //隐藏加载提示,自行处理
+                serverSide: true,  //启用服务器端分页
+                searching: false,  //禁用原生搜索
+                orderMulti: false,  //启用多列排序
+                ordering: false,
+                scrollX: true,
+                order: [],  //取消默认排序查询,否则复选框一列会出现小箭头
+                renderer: "bootstrap",  //渲染样式：Bootstrap和jquery-ui
+                pagingType: "full_numbers",  //分页样式：simple,simple_numbers,full,full_numbers
+                columnDefs: [{
+                    "targets": 'nosort',  //列的样式名
+                    "orderable": false    //包含上样式名‘nosort’的禁止排序
+                }],
+                ajax: function (data, callback, settings) {
+					
+                    //封装请求参数
+                    var param = {};
+                    param.pageSize= data.length;//页面显示记录条数，在页面显示每页显示多少项的时候
+                   param.pageIndex = data.start;//当前页码
+                   var url = '/scljbywhjl/listPage?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&courtyardArea='+courtyardArea;
+                    //ajax请求数据方法
+                    $.ajax({
+                        type: "GET",
+                        url: url,//url请求的地址
+                        cache: false,  //禁用缓存
+                        data: param,  //传入组装的参数
+                        dataType: "json",
+                        success: function (result) {
+
+                                //封装返回数据重要
+                                var returnData = {};
+                                //这里直接自行返回了draw计数器,应该由后台返回
+                                returnData.draw = data.draw;
+                                //返回数据全部记录
+                                returnData.recordsTotal = result.recordsTotal;
+                                //后台不实现过滤功能，每次查询均视作全部结果
+                                returnData.recordsFiltered = result.recordsTotal;
+                                //返回的数据列表
+                                returnData.data = result.data;
+								datas = result.data;
+                                //调用DataTables提供的callback方法，代表数据已封装完成并传回DataTables进行渲染
+                                //此时的数据需确保正确无误，异常判断应在执行此回调前自行处理完毕
+                                callback(returnData);
+                        }
+                    });
+                },
+                //列表表头字段
+                columns: columns
+            }).api(); //此处需调用api()方法,否则返回的是JQuery对象而不是DataTables的API对象
+            //允许多选
+            $('#scljbywhjlExample tbody').on( 'click', 'tr', function () {
+                $(this).toggleClass('selected');
+            } );
+          //双击事件
+    		$("#scljbywhjlExample tbody").on('dblclick','tr',function () {
+				$('#updateRxdkssj').val('');
+				$('#updateRxdjssj').val('');
+				$('#updateHxxdkssj').val('');
+				$('#updateHxxdjssj').val('');
+    			var number = $(this).children("td").eq(0).text();    			
+    			for(var i = 0;i<datas.length;i++){
+    				var data = datas[i];
+    				if(data.number == number){
+    					$('#updateModal').modal({backdrop:"static"});
+    	    			$('#updateId').val(data.id);
+    	        		$('#updateRqsj').val(data.rqsj);
+    	        		$('#updateYsyl').val(data.ysyl);
+    	        		$('#updateSljk').val(data.sljk);
+    	        		$('#updateSlck').val(data.slck);
+    	        		$('#updateTlck').val(data.tlck);
+    	        		$('#updateRhck').val(data.rhck);
+    	        		$('#updateJlck').val(data.jlck);
+    	        		$('#updateYjmj').val(data.yjmj);
+    	        		$('#updateYjnc').val(data.yjnc);
+    	        		$('#updateEjbqy').val(data.ejbqy);
+    	        		
+    	        		$('#updateEjmj').val(data.ejmj);
+    	        		$('#updateEjnc').val(data.ejnc);
+    	        		$('#updateCshl').val(data.cshl);
+    	        		if(data.rxdkssj != null){
+    	        		$('#updateRxdkssj').val(data.rqsj+' '+data.rxdkssj);
+    	        		}
+    	        		if(data.rxdjssj != null){
+    	        		$('#updateRxdjssj').val(data.rqsj+' '+data.rxdjssj);
+    	        		}
+    	        		if(data.hxxdkssj != null){
+    	        		$('#updateHxxdkssj').val(data.rqsj+' '+data.hxxdkssj);
+    	        		}
+    	        		if(data.hxxdjssj != null){
+    	        		$('#updateHxxdjssj').val(data.rqsj+' '+data.hxxdjssj);
+    	        		}
+    	        		$('#updateYjmc').val(data.yjmc);
+    	        		$('#updateYjnd').val(data.yjnd);
+    	        		$('#updateYjyl').val(data.yjyl);
+    	        		$('#updateCljc').val(data.cljc);
+    	        		$('#updateJly').val(data.jly);
+    	        		$("#updateCourtyardArea").val(data.courtyardArea);
+    	    			$('#updateRqsj').datetimepicker({
+    	    				language: 'zh-CN', //汉化
+    	    				format:"yyyy-mm-dd",
+   	    				 weekStart: 1,
+   	    			     todayBtn:  1,
+   	    				 autoclose: 1,
+   	    				 todayHighlight: 1,
+   	    				 startView: 2,
+   	    				 minView: 2,
+   	    				 forceParse: 0
+    	    		    });
+    	    			
+    	    			$('#updateRxdkssj').datetimepicker({
+    	    				language: 'zh-CN', //汉化
+    	    				format:"hh:ii",
+    	    				weekStart: 1,
+    	    		        todayBtn:  1,
+    	    				autoclose: 1,
+    	    				todayHighlight: 1,
+    	    				startView: 1,
+    	    				minView: 0,
+    	    				maxView: 1,
+    	    				forceParse: 0
+    	    		    });
+    	    			
+    	    			$('#updateRxdjssj').datetimepicker({
+    	    				language: 'zh-CN', //汉化
+    	    				format:"hh:ii",
+    	    				weekStart: 1,
+    	    		        todayBtn:  1,
+    	    				autoclose: 1,
+    	    				todayHighlight: 1,
+    	    				startView: 1,
+    	    				minView: 0,
+    	    				maxView: 1,
+    	    				forceParse: 0
+    	    		    });
+    	    			
+    	    			$('#updateHxxdkssj').datetimepicker({
+    	    				language: 'zh-CN', //汉化
+    	    				format:"hh:ii",
+    	    				weekStart: 1,
+    	    		        todayBtn:  1,
+    	    				autoclose: 1,
+    	    				todayHighlight: 1,
+    	    				startView: 1,
+    	    				minView: 0,
+    	    				maxView: 1,
+    	    				forceParse: 0
+    	    		    });
+    	    			
+    	    			$('#updateHxxdjssj').datetimepicker({
+    	    				language: 'zh-CN', //汉化
+    	    				format:"hh:ii",
+    	    				weekStart: 1,
+    	    		        todayBtn:  1,
+    	    				autoclose: 1,
+    	    				todayHighlight: 1,
+    	    				startView: 1,
+    	    				minView: 0,
+    	    				maxView: 1,
+    	    				forceParse: 0
+    	    		    });
+    					break;
+    				}
+    			}
+    		});
+                 
+            
+            $('#scljbywhjlExample tbody').on( 'mouseenter', 'td', function () {
+                var colIdx = dt.cell(this).index().column;
+     
+                $( dt.cells().nodes() ).removeClass( 'highlight' );
+                $( dt.column( colIdx ).nodes() ).addClass( 'highlight' );
+            } );
+            $("#scljbywhjlExample_length").append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id='add' class='btn btn-success'><span class='glyphicon glyphicon-plus-sign' aria-hidden='true'></span> 新增</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id='delete' class='btn btn-danger'><span class='glyphicon glyphicon-remove' aria-hidden='true'></span> 删除</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id='export' class='btn btn-primary'><span class='glyphicon glyphicon-export' aria-hidden='true'></span> 导出</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;起始日期:<input id='startTime' name='startTime' type='text' style='width:130px' readonly/>&nbsp;&nbsp;&nbsp;结束日期:<input id='endTime' name='endTime' type='text' style='width:130px' readonly/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id='search' class='btn btn-info'><span class='glyphicon glyphicon-search' aria-hidden='true'></span> 搜索</button>");
+            $('#startTime').datetimepicker({
+				language: 'zh-CN', //汉化
+				format:"yyyy-mm-dd",
+				 weekStart: 1,
+			     todayBtn:  1,
+				 autoclose: 1,
+				 todayHighlight: 1,
+				 startView: 2,
+				 minView: 2,
+				 forceParse: 0
+		    });
+            $('#endTime').datetimepicker({
+				language: 'zh-CN', //汉化
+				format:"yyyy-mm-dd",
+				 weekStart: 1,
+			     todayBtn:  1,
+				 autoclose: 1,
+				 todayHighlight: 1,
+				 startView: 2,
+				 minView: 2,
+				 forceParse: 0
+		    });
+            
+            $("#add").unbind("click");
+    		$("#add").bind("click",function(){
+    			/* 弹出添加页面  */
+    			
+    			$('#addModal').modal({backdrop:"static"});
+				$('#addCourtyardArea').val(courtyardArea);
+    			var date = new Date();
+    			var month = date.getMonth() + 1;
+    			if(month < 10){
+    				month = "0"+ month;
+    			}
+    			var day = date.getDate();
+    			if(day < 10){
+    				day = "0" + day;
+    			}
+    			
+    			var defaultDate = date.getFullYear() + '-' + month + '-' + day;
+        		$('#rqsj').val(defaultDate);
+        		$('#rqsj').datetimepicker({
+    				language: 'zh-CN', //汉化
+    				format:"yyyy-mm-dd",
+   				 weekStart: 1,
+   			     todayBtn:  1,
+   				 autoclose: 1,
+   				 todayHighlight: 1,
+   				 startView: 2,
+   				 minView: 2,
+   				 forceParse: 0
+    		    });
+    			
+    			$('#rxdkssj').datetimepicker({
+    				language: 'zh-CN', //汉化
+    				format:"hh:ii",
+    				weekStart: 1,
+    		        todayBtn:  1,
+    				autoclose: 1,
+    				todayHighlight: 1,
+    				startView: 1,
+    				minView: 0,
+    				maxView: 1,
+    				forceParse: 0
+    		    });
+    			
+    			$('#rxdjssj').datetimepicker({
+    				language: 'zh-CN', //汉化
+    				format:"hh:ii",
+    				weekStart: 1,
+    		        todayBtn:  1,
+    				autoclose: 1,
+    				todayHighlight: 1,
+    				startView: 1,
+    				minView: 0,
+    				maxView: 1,
+    				forceParse: 0
+    		    });
+    			
+    			$('#hxxdkssj').datetimepicker({
+    				language: 'zh-CN', //汉化
+    				format:"hh:ii",
+    				weekStart: 1,
+    		        todayBtn:  1,
+    				autoclose: 1,
+    				todayHighlight: 1,
+    				startView: 1,
+    				minView: 0,
+    				maxView: 1,
+    				forceParse: 0
+    		    });
+    			
+    			$('#hxxdjssj').datetimepicker({
+    				language: 'zh-CN', //汉化
+    				format:"hh:ii",
+    				weekStart: 1,
+    		        todayBtn:  1,
+    				autoclose: 1,
+    				todayHighlight: 1,
+    				startView: 1,
+    				minView: 0,
+    				maxView: 1,
+    				forceParse: 0
+    		    });
+    		});
+    		
+    		$("#delete").unbind("click");
+			$("#delete").bind("click",function(){
+				var length = dt.rows('.selected').data().length;
+				if(length == 0){
+					toastr.warning("请至少选中一行数据删除 !");
+				}else{
+					swal({
+						title: "你确定吗？",
+						text: "删除后，您将无法恢复此数据！",
+						icon: "warning",
+						buttons: ["取消","确认"]
+					}).then((willDelete) => {
+						if (willDelete) {
+							var length = dt.rows('.selected').data().length;
+
+							var datas = dt.rows('.selected').data();
+							var ids = '';
+							for(var i = 0;i<datas.length;i++){
+								var data = datas[i];
+								if(i == (datas.length - 1)){
+									ids += data.id;
+								}else{
+									ids += data.id + ',';
+								}
+							}
+							var deleteUrl = '/scljbywhjl/'+ids;
+							$.ajax({
+								url:deleteUrl,
+								type:"DELETE",
+								dataType:"json",
+								error:function(){
+									toastr.error("删除数据出错!");
+								},
+								success:function(data){
+									if(data.success){
+										toastr.success(data.message);
+										dt.ajax.reload();
+									}else{
+										toastr.error("错误信息:  "+data.message);
+									}
+								}
+							});
+
+						}
+					});
+				}
+			});
+    		
+    		$("#export").unbind("click");
+    		$("#export").bind("click",function(){
+    			var url = '/scljbywhjl/exportExcel?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&courtyardArea='+courtyardArea;
+    			window.location.href = url;
+    		});
+    		
+    		$("#addClick").unbind("click");
+    		$("#addClick").bind("click",function(){
+				save();
+    		});
+    		
+    		$("#updateClick").unbind("click");
+    		$("#updateClick").bind("click",function(){
+    			update();
+    		});
+    		
+    		$("#startTime").unbind("change");
+    		$("#startTime").bind("change",function(){
+    			dt.ajax.reload();
+    		});
+
+			setTimeout(function(){dt.ajax.reload();},1000);
+    		
+    		$("#endTime").unbind("change");
+    		$("#endTime").bind("change",function(){
+    			dt.ajax.reload();
+    		});
+    		
+    		$("#search").unbind("click");
+    		$("#search").bind("click",function(){
+    			dt.ajax.reload();
+    		});
+
+			$('#updateModal').on('shown.bs.modal',function(e){     //模态框的ID
+				if(courtyardArea == '新院') {
+					$('#updateYsyl').focus();
+					$('#updateYsyl').select();
+				}else if(courtyardArea == '老院'){
+					$('#updateSljk').focus();
+					$('#updateSljk').select();
+				}
+			});
+			$('#addModal').on('shown.bs.modal',function(e){     //模态框的ID
+				if(courtyardArea == '新院') {
+					$('#ysyl').focus();
+				}else if(courtyardArea == '老院'){
+					$('#sljk').focus();
+				}
+			});
+
+			$('#scljbywhjlSelect').val($('#courtyardArea').val());
+			$('#scljbywhjlSelect').unbind("change");
+    		$('#scljbywhjlSelect').bind("change",function(){
+    			if($(this).val() == '老院'){
+    			window.location.href = '/scljbywhjl/view/old';
+    			}else if($(this).val() == '新院'){
+    			window.location.href = '/scljbywhjl/view/new';
+    			}
+    		});
+    	});
+
+	function focusNextInput1(thisInput)
+	{
+		var inputs = document.getElementsByClassName("add");
+		for(var i = 0;i<inputs.length;i++){
+			// 如果是最后一个，则焦点回到第一个
+			if(i==(inputs.length-1)){
+				swal({
+					title: "你确定吗？",
+					text: "确定要保存数据吗！",
+					icon: "success",
+					buttons: ["取消","确认"]
+				}).then((willDelete) => {
+					if (willDelete) {
+						save();
+					}
+				});
+			}else if(thisInput == inputs[i]){
+				inputs[i+1].focus();
+				inputs[i+1].select();
+				break;
+			}
+		}
+	};
+
+	function focusNextInput2(thisInput)
+	{
+		var inputs = document.getElementsByClassName("update");
+		for(var i = 0;i<inputs.length;i++){
+			// 如果是最后一个，则焦点回到第一个
+			if(i==(inputs.length-1)){
+				swal({
+					title: "你确定吗？",
+					text: "确定要保存修改的数据吗！",
+					icon: "success",
+					buttons: ["取消","确认"]
+				}).then((willDelete) => {
+					if (willDelete) {
+						update();
+					}
+				});
+			}else if(thisInput == inputs[i]){
+				inputs[i+1].focus();
+				inputs[i+1].select();
+				break;
+			}
+		}
+	};
+
+function save() {
+	var jly = $("#jly").val().trim();
+	if(jly == ''){
+		toastr.warning("记录员不能为空!");
+		document.getElementById('jly').focus();
+	}else{
+		$.post('/scljbywhjl',$("#addForm").serialize(),function(data){
+			if(data.success){
+				$('#addModal').modal('hide');
+				toastr.success(data.message);
+				dt.ajax.reload();
+				document.getElementById('addForm').reset();
+			}else{
+				toastr.error("错误信息:  "+data.message);
+			}
+		},"json");
+	}
+};
+function update() {
+	var jly = $("#updateJly").val().trim();
+	if(jly == ''){
+		toastr.warning("记录员不能为空!");
+		document.getElementById('updateJly').focus();
+	}else{
+		var updateRxdkssj = $('#updateRxdkssj').val();
+		var dateFormat =/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/;
+		if(dateFormat.test(updateRxdkssj)){
+			$('#updateRxdkssj').val($('#updateRxdkssj').val().substring(10,16));
+		}
+		var updateRxdjssj = $('#updateRxdjssj').val();
+		if(dateFormat.test(updateRxdjssj)){
+			$('#updateRxdjssj').val($('#updateRxdjssj').val().substring(10,16));
+		}
+		var updateHxxdkssj = $('#updateHxxdkssj').val();
+		if(dateFormat.test(updateHxxdkssj)){
+			$('#updateHxxdkssj').val($('#updateHxxdkssj').val().substring(10,16));
+		}
+		var updateHxxdjssj = $('#updateHxxdjssj').val();
+		if(dateFormat.test(updateHxxdjssj)){
+			$('#updateHxxdjssj').val($('#updateHxxdjssj').val().substring(10,16));
+		}
+		$.ajax({
+			type: "PUT",
+			url: "/scljbywhjl",//url请求的地址
+			cache: false,  //禁用缓存
+			data: $("#updateForm").serialize(),  //传入组装的参数
+			dataType: "json",
+			success: function (data) {
+				if(data.success){
+					$('#updateModal').modal('hide');
+					toastr.success(data.message);
+					dt.ajax.reload();
+				}else{
+					toastr.error("错误信息:  "+data.message);
+				}
+			}
+		});
+	}
+};
+    </script>
+    <link rel="stylesheet" type="text/css" href="/css/datatables.min.css">
+    <style type="text/css">
+    	td.details-control {
+    background: url('/css/DataTables-1.10.18/images/edit_add.png') no-repeat center center;
+    cursor: pointer;
+		}
+		tr.details td.details-control {
+		    background: url('/css/DataTables-1.10.18/images/cancel.png') no-repeat center center;
+		}
+			
+	td.highlight {
+	    background-color: whitesmoke !important;
+	}
+	h2{
+		text-align:center
+	}
+	th {
+	    text-align: center;
+	}
+	td {
+	    text-align: center;
+	}
+    </style>
+</head>
+<body>
+<input type="hidden" th:value="${courtyardArea}" id="courtyardArea"/>
+
+<h2>水处理机半月维护记录(<span th:text="${courtyardArea}"></span>)</h2>
+<select class="form-control" style="width:auto" id="scljbywhjlSelect"><option value="新院">新院</option><option value="老院">老院</option></select>
+
+<div>
+  <table id="scljbywhjlExample" class="display" style="width:100%">
+        <thead>
+             <tr>
+                <th rowspan="2">序号</th>            
+                <th rowspan="2">日期时间</th>   
+               	<th colspan="12" style="color:blue;" th:if="${courtyardArea} eq '新院'">在线压力显示(MPa)</th>  
+               	<th colspan="11" style="color:blue;" th:if="${courtyardArea} eq '老院'">在线压力显示(MPa)</th>      
+                <th colspan="2">热消毒</th>    
+                <th colspan="6" style="color:blue;">化学消毒</th>  
+                <th rowspan="2">记录员</th>
+               
+            </tr>
+            
+            <tr>
+                <th style="color:blue;" th:if="${courtyardArea} eq '新院'">原水压力</th>
+                <th style="color:blue;">砂虑进口</th>
+                <th style="color:blue;">砂虑出口</th> 
+                 <th style="color:blue;">碳虑出口</th>
+                <th style="color:blue;">软化出口</th>   
+                <th style="color:blue;">精滤出口</th> 
+                <th style="color:blue;">一级膜进</th>   
+                <th style="color:blue;" th:if="${courtyardArea} eq '新院'">一级浓出</th>
+                <th style="color:blue;" th:if="${courtyardArea} eq '老院'">二级膜进</th> 
+                <th style="color:blue;">二级泵前压</th> 
+                <th style="color:blue;" th:if="${courtyardArea} eq '老院'">一级浓出</th>
+                <th style="color:blue;" th:if="${courtyardArea} eq '新院'">二级膜进</th>  
+                <th style="color:blue;">二级浓出</th> 
+                <th style="color:blue;">纯水回路</th>
+                <th>开始时间</th> 
+                <th>结束时间</th>
+                <th style="color:blue;">开始时间</th> 
+                <th style="color:blue;">结束时间</th>
+                <th style="color:blue;">药剂名称</th> 
+                <th style="color:blue;">药剂浓度</th>
+                <th style="color:blue;">药剂用量</th> 
+                <th style="color:blue;">残留检测</th>
+            </tr>
+        </thead>
+        <!-- <tfoot>
+            <tr>
+             	<th>序号</th>            
+                <th>日期时间</th>   
+            	<th th:if="${courtyardArea} eq '新院'">原水压力</th>
+                <th>砂虑进口</th>
+                <th>砂虑出口</th> 
+                <th>碳虑出口</th>
+                <th>软化出口</th>   
+                <th>精滤出口</th> 
+                <th>一级膜进</th>   
+                <th th:if="${courtyardArea} eq '新院'">一级浓出</th>
+                <th th:if="${courtyardArea} eq '老院'">二级膜进</th> 
+                <th>二级泵前压</th> 
+                <th th:if="${courtyardArea} eq '老院'">一级浓出</th>
+                <th th:if="${courtyardArea} eq '新院'">二级膜进</th> 
+                <th>二级浓出</th> 
+                <th>纯水回路</th>
+                <th>开始时间</th> 
+                <th>结束时间</th>
+                <th>开始时间</th> 
+                <th>结束时间</th>
+                <th>药剂名称</th> 
+                <th>药剂浓度</th>
+                <th>药剂用量</th> 
+                <th>残留检测</th>
+                <th>记录员</th>
+            </tr>
+        </tfoot> -->
+    </table>
+    
+</div>
+
+
+
+<!-- 添加页面 -->
+<div class="modal fade" id="addModal" tabindex="-1" role="dialog"  aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document" style="width: 700px;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">添加水处理机半月维护记录</h4>
+      </div>
+      <div class="modal-body">
+				        <form id="addForm" class="form-horizontal">
+				        <input type="hidden" name="courtyardArea" id="addCourtyardArea"/>
+				        <div class="form-group">
+				    <label  class="col-sm-2 control-label">日期时间</label>
+				    <div class="col-sm-4">
+				      <input id="rqsj" name="rqsj" class="form-control" type="text" value="" readonly/>
+				    </div>
+				     <label  class="col-sm-2 control-label" th:if="${courtyardArea} == '新院'">原水压力</label>
+				    <div class="col-sm-4" th:if="${courtyardArea} == '新院'">
+				      <input type="text" class="form-control add" id="ysyl"  name="ysyl" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				  </div>
+				 
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">砂虑进口</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add" id="sljk"  name="sljk" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">砂虑出口</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="slck" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				  </div>
+				  
+				   <div class="form-group">
+				    <label  class="col-sm-2 control-label">碳虑出口</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="tlck" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">软化出口</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="rhck" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				  </div>
+				  
+				   <div class="form-group">
+				    <label  class="col-sm-2 control-label">精虑出口</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="jlck" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">一级膜进</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="yjmj" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label" th:if="${courtyardArea} == '新院'">一级浓出</label>
+				    <div class="col-sm-4" th:if="${courtyardArea} == '新院'">
+				      <input type="text" class="form-control add"  name="yjnc" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				    
+				    <label  class="col-sm-2 control-label" th:if="${courtyardArea} == '老院'">二级膜进</label>
+				    <div class="col-sm-4" th:if="${courtyardArea} == '老院'">
+				      <input type="text" class="form-control add"  name="ejmj" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				    
+				    <label  class="col-sm-2 control-label">二级泵前压</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="ejbqy" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				   <label  class="col-sm-2 control-label" th:if="${courtyardArea} == '老院'">一级浓出</label>
+				    <div class="col-sm-4" th:if="${courtyardArea} == '老院'">
+				      <input type="text" class="form-control add"  name="yjnc" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				    
+				    <label  class="col-sm-2 control-label" th:if="${courtyardArea} == '新院'">二级膜进</label>
+				    <div class="col-sm-4" th:if="${courtyardArea} == '新院'">
+				      <input type="text" class="form-control add"  name="ejmj" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				   
+				   
+				    <label  class="col-sm-2 control-label">二级浓出</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="ejnc" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">纯水回路</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="cshl" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">开始时间(热消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control" id="rxdkssj"  name="rxdkssj" readonly="readonly">
+				    </div>
+				  </div>
+			
+				   <div class="form-group">
+				    <label  class="col-sm-2 control-label">结束时间(热消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control"  name="rxdjssj" id="rxdjssj" readonly="readonly">
+				    </div>
+				    <label  class="col-sm-2 control-label">开始时间(化学消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control"  name="hxxdkssj" id="hxxdkssj" readonly="readonly">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结束时间(化学消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control"  name="hxxdjssj" id="hxxdjssj" readonly="readonly">
+				    </div>
+				    <label  class="col-sm-2 control-label">药剂名称(化学消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="yjmc" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">药剂浓度(化学消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="yjnd" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">药剂用量(化学消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="yjyl" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">残留检测(化学消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" class="form-control add"  name="cljc" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">记录员</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="jly" class="form-control add"  name="jly" onkeypress="if(event.keyCode==13) focusNextInput1(this);">
+				    </div>
+				  </div>
+				</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal"><span class='glyphicon glyphicon-remove' aria-hidden='true'></span> 关闭</button>
+        <button type="button" id="addClick" class="btn btn-primary"><span class='glyphicon glyphicon-ok' aria-hidden='true'></span> 保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- 修改页面 -->
+<div class="modal fade" id="updateModal" tabindex="-1" role="dialog"  aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document" style="width: 700px;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">修改水处理机半月维护记录</h4>
+      </div>
+      <div class="modal-body">
+				        <form id="updateForm" class="form-horizontal">
+				        <input type="hidden" name="id" id="updateId"/>
+				        <input type="hidden" name="courtyardArea" id="updateCourtyardArea"/>	          <div class="form-group">
+				    <label  class="col-sm-2 control-label">日期时间</label>
+				    <div class="col-sm-4">
+				      <input id="updateRqsj" name="rqsj" class="form-control" type="text" value="" readonly/>
+				    </div>
+				     <label  class="col-sm-2 control-label" th:if="${courtyardArea} == '新院'">原水压力</label>
+				    <div class="col-sm-4" th:if="${courtyardArea} == '新院'">
+				      <input type="text" id="updateYsyl" class="form-control update"  name="ysyl" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				  </div>
+				 
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">砂虑进口</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateSljk" class="form-control update"  name="sljk" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">砂虑出口</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateSlck" class="form-control update"  name="slck" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				  </div>
+				  
+				   <div class="form-group">
+				    <label  class="col-sm-2 control-label">碳虑出口</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateTlck" class="form-control update"  name="tlck" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">软化出口</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateRhck" class="form-control update"  name="rhck" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				  </div>
+				  
+				   <div class="form-group">
+				    <label  class="col-sm-2 control-label">精虑出口</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateJlck" class="form-control update"  name="jlck" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">一级膜进</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateYjmj" class="form-control update"  name="yjmj" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label" th:if="${courtyardArea} == '新院'">一级浓出</label>
+				    <div class="col-sm-4" th:if="${courtyardArea} == '新院'">
+				      <input type="text" id="updateYjnc" class="form-control update"  name="yjnc" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				    
+				    <label  class="col-sm-2 control-label" th:if="${courtyardArea} == '老院'">二级膜进</label>
+				    <div class="col-sm-4" th:if="${courtyardArea} == '老院'">
+				      <input type="text" id="updateEjmj" class="form-control update"  name="ejmj" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				    
+				    <label  class="col-sm-2 control-label">二级泵前压</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateEjbqy" class="form-control update"  name="ejbqy" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				   <label  class="col-sm-2 control-label" th:if="${courtyardArea} == '老院'">一级浓出</label>
+				    <div class="col-sm-4" th:if="${courtyardArea} == '老院'">
+				      <input type="text" id="updateYjnc" class="form-control update"  name="yjnc" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				    
+				    <label  class="col-sm-2 control-label" th:if="${courtyardArea} == '新院'">二级膜进</label>
+				    <div class="col-sm-4" th:if="${courtyardArea} == '新院'">
+				      <input type="text" id="updateEjmj" class="form-control update"  name="ejmj" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">二级浓出</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateEjnc" class="form-control update"  name="ejnc" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">纯水回路</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateCshl" class="form-control update"  name="cshl" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">开始时间(热消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateRxdkssj" class="form-control"  name="rxdkssj" readonly="readonly">
+				    </div>
+				  </div>
+			
+				   <div class="form-group">
+				    <label  class="col-sm-2 control-label">结束时间(热消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateRxdjssj" class="form-control"  name="rxdjssj" readonly="readonly">
+				    </div>
+				    <label  class="col-sm-2 control-label">开始时间(化学消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateHxxdkssj" class="form-control"  name="hxxdkssj" readonly="readonly">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">结束时间(化学消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateHxxdjssj" class="form-control"  name="hxxdjssj" readonly="readonly">
+				    </div>
+				    <label  class="col-sm-2 control-label">药剂名称(化学消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateYjmc" class="form-control update"  name="yjmc" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">药剂浓度(化学消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateYjnd" class="form-control update"  name="yjnd" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">药剂用量(化学消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateYjyl" class="form-control update"  name="yjyl" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label  class="col-sm-2 control-label">残留检测(化学消毒)</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateCljc" class="form-control update"  name="cljc" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				    <label  class="col-sm-2 control-label">记录员</label>
+				    <div class="col-sm-4">
+				      <input type="text" id="updateJly" class="form-control update"  name="jly" onkeypress="if(event.keyCode==13) focusNextInput2(this);">
+				    </div>
+				  </div>
+				</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal"><span class='glyphicon glyphicon-remove' aria-hidden='true'></span> 关闭</button>
+        <button type="button" id="updateClick" class="btn btn-primary"><span class='glyphicon glyphicon-ok' aria-hidden='true'></span> 保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="position: fixed; bottom:0; left:37%">Copyright© <span th:text="${nowYear}"></span> 华脉汇百通信息技术（北京）有限公司</div>
+
+</body>
+</html>

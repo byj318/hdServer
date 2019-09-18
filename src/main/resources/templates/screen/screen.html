@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>温附一透析排班一览表</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <script type="text/javascript" src="/js/jquery-1.8.3.min.js"></script>
+    <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+
+    <style type="text/css">
+        *{
+            margin: 0px;
+            padding: 0px;
+            text-align: center;
+        }
+        body{
+            overflow: hidden;
+        }
+        .titlecolor{
+            color:yellow;
+            text-align: center;
+            font-size: 25px;
+        }
+        .bodycolor{
+            color: #ffffff;
+            text-align: center;
+            font-size: 25px;
+        }
+        table th{
+            text-align: center;
+        }
+        .title{
+            height: 40px;
+            font-size: 35px;
+            padding-bottom: 50px;
+            font-weight: bold;
+        }
+        table th{
+            border:3px solid #ffffff;
+        }
+        .typeColer{
+            color:red;
+        }
+        .blueKuang{
+            border:2px solid blue;
+            width: 80%;
+            height: 80%;
+            /*background-position-x:left 25%;*/
+            background-color: blue;
+            /*background: linear-gradient(#fb3 20%, #58a 80%);*/
+            background:linear-gradient(-90deg,blue 50%,#000000 50%);
+            /*background-position-x:left 35%; background-repeat:no-repeat;*/
+        }
+    </style>
+
+</head>
+<body  style="height: 100%;">
+<div id="contaner" class="outer" style="height: 100%;background-color: #000000">
+    <div class="title titlecolor">温附一透析排班一览表</div>
+    <table  width="100%" style="border:3px solid #ffffff;">
+
+            <tr class="titlecolor">
+                <th colspan="11">
+                    <div class="row">
+                        <div class="col-md-4" id="nyr">日期:2019-04-20</div>
+                        <div class="col-md-4">排班：</div>
+                        <div class="col-md-4" id="sf">12:50</div>
+                    </div>
+                </th>
+            </tr>
+            <tr class="titlecolor">
+                <th colspan="5" width="44%">
+                    <div class="row">
+                        <div class="col-md-2">姓名</div>
+                        <div class="col-md-2"></div>
+                        <div class="col-md-2">床号</div>
+                        <div class="col-md-2">状态</div>
+                        <div class="col-md-4">时间</div>
+                    </div>
+                </th>
+                <th colspan="5" width="44%">
+                    <div class="col-md-2">姓名</div>
+                    <div class="col-md-2"></div>
+                    <div class="col-md-2">床号</div>
+                    <div class="col-md-2">状态</div>
+                    <div class="col-md-4">时间</div>
+                </th>
+                <th  width="12%">
+                        注意事项
+                </th>
+            </tr>
+        <tbody id="patient_contaner">
+
+              <tr class="bodycolor"  >
+                <th colspan="5" width="44%" >
+                    <div class="row">
+                        <div class="col-md-2">李四</div>
+                        <div class="col-md-2 typeColer">HD</div>
+                        <div class="col-md-2">55</div>
+                        <div class="col-md-2">透析中</div>
+                        <div class="col-md-4">
+
+                                <div class="blueKuang">
+                                    剩10分钟
+                                </div>
+
+                        </div>
+                    </div>
+                </th>
+                <th colspan="5" width="44%">
+                    <div class="col-md-2">张三</div>
+                    <div class="col-md-2 typeColer">HD</div>
+                    <div class="col-md-2">5</div>
+                    <div class="col-md-2">透析中</div>
+                    <div class="col-md-4">
+                        <div class="blueKuang">
+                            剩10分钟
+                        </div>
+                    </div>
+                </th>
+                <th  width="12%" class="zysx" >
+                    注意事项
+                </th>
+              </tr>
+        </tbody>
+    </table>
+
+</div>
+
+</body>
+
+<script type="text/javascript">
+$(function(){
+    var myDate = new Date();
+    var year = myDate.getFullYear();    //获取完整的年份(4位,1970-????)
+    var month = myDate.getMonth()+1;       //获取当前月份(0-11,0代表1月)
+    month = month < 10 ? '0'+month:month;
+    var day = myDate.getDate();        //获取当前日(1-31)
+    day = day < 10 ? '0'+day:day;
+    $('#nyr').text('日期:'+year+'-'+month+'-'+day);
+    var hour = myDate.getHours();
+    hour = hour < 10 ? '0'+hour : hour;
+    var minute = myDate.getMinutes();
+    minute = minute < 10 ? '0'+minute:minute;
+    var sf = hour+':'+minute
+    $('#sf').text(sf);
+    //时钟
+    setInterval(function(){
+        var myDate = new Date();
+        var hour = myDate.getHours();
+        hour = hour < 10 ? '0'+hour : hour;
+        var minute = myDate.getMinutes();
+        minute = minute < 10 ? '0'+minute:minute;
+        var sf = hour+':'+minute;
+        $('#sf').text(sf);  //设置每秒刷新一次，显示在页面上
+    },60000) ;
+
+    var hs = 13;
+    var height = $(window).height();
+    $("#contaner").css("height",height);
+    var tableHeith = height-90;
+    var height = tableHeith/(hs+2);
+    $("tr").css("height",height);
+
+    var nr = $("#patient_contaner").html();
+
+    var str = "";
+    for(var i=0;i<hs;i++){
+        str += nr;
+    }
+
+    $("#patient_contaner").html(str);
+    $(".zysx").each(function (i, o) {
+        if(i!=0){
+            $(o).remove();
+
+        }else {
+            $(o).attr("rowspan",hs);
+        }
+
+    });
+    var sl = $(".blueKuang").size();
+    $(".blueKuang").each(function (i, o) {
+        var bfb = (i/sl)*100;
+        var sybfb = 100 - bfb;
+        $(o).css("background","linear-gradient(-90deg,blue "+bfb+"%,#000000 "+sybfb+"%)");
+    });
+
+                            $.ajax({
+								url:'/screen/getData',
+								type:"GET",
+								dataType:"json",
+
+								success:function(data){
+									console.log(data[0]);
+									console.log(data[1]);
+								}
+
+							});
+});
+
+
+</script>
+</html>

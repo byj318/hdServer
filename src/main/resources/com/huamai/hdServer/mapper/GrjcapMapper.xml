@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 感染监测安排  mapper文件  用于书写复杂sql -->
+<mapper namespace="com.huamai.hdServer.mapper.GrjcapMapper">
+ 	<select id="getAll" resultType="com.huamai.hdServer.domain.Grjcap">
+ 		select id,
+ 		rqsj,sws_result,sws_time,jqbm_result,jqbm_time,
+ 		zls1_result,zls1_time,zls2_result,zls2_time,
+ 		fssa_rys_result,fssa_rys_time,fssa_xjs_result,fssa_xjs_time,
+ 		fssb_rys_result,fssb_rys_time,fssb_xjs_result,fssb_xjs_time,
+ 		txya_rys_result,txya_rys_time,txya_xjs_result,txya_xjs_time,
+ 		txyb_rys_result,txyb_rys_time,txyb_xjs_result,txyb_xjs_time,
+ 		txyc_rys_result,txyc_rys_time,txyc_xjs_result,txyc_xjs_time,
+ 		txyd_rys_result,txyd_rys_time,txyd_xjs_result,txyd_xjs_time,
+ 		txye_rys_result,txye_rys_time,txye_xjs_result,txye_xjs_time,
+ 		txyf_rys_result,txyf_rys_time,txyf_xjs_result,txyf_xjs_time,
+ 		txyg_rys_result,txyg_rys_time,txyg_xjs_result,txyg_xjs_time,
+ 		txyh_rys_result,txyh_rys_time,txyh_xjs_result,txyh_xjs_time,
+ 		cccyr,fccyr,remark,courtyardArea
+ 		from grjcap 
+ 		where is_delete = 0
+ 		<if test="startTime != null">
+			AND rqsj >= #{startTime}
+		</if>
+		<if test="endTime != null">
+			AND rqsj &lt;= #{endTime}
+		</if>
+		<if test="courtyardArea != null and courtyardArea != '' and courtyardArea != '全院'">
+			AND courtyardArea = #{courtyardArea}
+		</if>
+ 		order by rqsj desc
+ 	</select>
+ 	
+ 	<insert id="insertData" parameterType="com.huamai.hdServer.domain.Grjcap">
+ 		INSERT INTO 
+ 		grjcap(rqsj,sws_result,sws_time,jqbm_result,jqbm_time,
+ 		zls1_result,zls1_time,zls2_result,zls2_time,
+ 		fssa_rys_result,fssa_rys_time,fssa_xjs_result,fssa_xjs_time,
+ 		fssb_rys_result,fssb_rys_time,fssb_xjs_result,fssb_xjs_time,
+ 		txya_rys_result,txya_rys_time,txya_xjs_result,txya_xjs_time,
+ 		txyb_rys_result,txyb_rys_time,txyb_xjs_result,txyb_xjs_time,
+ 		txyc_rys_result,txyc_rys_time,txyc_xjs_result,txyc_xjs_time,
+ 		txyd_rys_result,txyd_rys_time,txyd_xjs_result,txyd_xjs_time,
+ 		txye_rys_result,txye_rys_time,txye_xjs_result,txye_xjs_time,
+ 		txyf_rys_result,txyf_rys_time,txyf_xjs_result,txyf_xjs_time,
+ 		txyg_rys_result,txyg_rys_time,txyg_xjs_result,txyg_xjs_time,
+ 		txyh_rys_result,txyh_rys_time,txyh_xjs_result,txyh_xjs_time,
+ 		cccyr,fccyr,remark,is_delete,courtyardArea) 
+ 	 VALUES (#{rqsj},#{swsResult},#{swsTime},#{jqbmResult},#{jqbmTime},
+ 	 #{zls1Result},#{zls1Time},#{zls2Result},#{zls2Time},
+ 	 #{fssaRysResult},#{fssaRysTime},#{fssaXjsResult},#{fssaXjsTime},
+ 	 #{fssbRysResult},#{fssbRysTime},#{fssbXjsResult},#{fssbXjsTime},
+ 	 #{txyaRysResult},#{txyaRysTime},#{txyaXjsResult},#{txyaXjsTime},
+ 	 #{txybRysResult},#{txybRysTime},#{txybXjsResult},#{txybXjsTime},
+ 	 #{txycRysResult},#{txycRysTime},#{txycXjsResult},#{txycXjsTime},
+ 	 #{txydRysResult},#{txydRysTime},#{txydXjsResult},#{txydXjsTime},
+ 	 #{txyeRysResult},#{txyeRysTime},#{txyeXjsResult},#{txyeXjsTime},
+ 	 #{txyfRysResult},#{txyfRysTime},#{txyfXjsResult},#{txyfXjsTime},
+ 	 #{txygRysResult},#{txygRysTime},#{txygXjsResult},#{txygXjsTime},
+ 	 #{txyhRysResult},#{txyhRysTime},#{txyhXjsResult},#{txyhXjsTime},
+ 	 #{cccyr},#{fccyr},#{remark},#{isDelete},#{courtyardArea})
+ 	</insert>
+ 	
+ 	<update id="updateData" parameterType="com.huamai.hdServer.domain.Grjcap">
+ 		update grjcap set 
+ 		rqsj=#{rqsj},sws_result=#{swsResult},sws_time=#{swsTime},jqbm_result=#{jqbmResult},jqbm_time=#{jqbmTime},
+ 		zls1_result=#{zls1Result},zls1_time=#{zls1Time},zls2_result=#{zls2Result},zls2_time=#{zls2Time},
+ 		fssa_rys_result=#{fssaRysResult},fssa_rys_time=#{fssaRysTime},fssa_xjs_result=#{fssaXjsResult},fssa_xjs_time=#{fssaXjsTime},
+ 		fssb_rys_result=#{fssbRysResult},fssb_rys_time=#{fssbRysTime},fssb_xjs_result=#{fssbXjsResult},fssb_xjs_time=#{fssbXjsTime},
+ 		txya_rys_result=#{txyaRysResult},txya_rys_time=#{txyaRysTime},txya_xjs_result=#{txyaXjsResult},txya_xjs_time=#{txyaXjsTime},
+ 		txyb_rys_result=#{txybRysResult},txyb_rys_time=#{txybRysTime},txyb_xjs_result=#{txybXjsResult},txyb_xjs_time=#{txybXjsTime},
+ 		txyc_rys_result=#{txycRysResult},txyc_rys_time=#{txycRysTime},txyc_xjs_result=#{txycXjsResult},txyc_xjs_time=#{txycXjsTime},
+ 		txyd_rys_result=#{txydRysResult},txyd_rys_time=#{txydRysTime},txyd_xjs_result=#{txydXjsResult},txyd_xjs_time=#{txydXjsTime},
+ 		txye_rys_result=#{txyeRysResult},txye_rys_time=#{txyeRysTime},txye_xjs_result=#{txyeXjsResult},txye_xjs_time=#{txyeXjsTime},
+ 		txyf_rys_result=#{txyfRysResult},txyf_rys_time=#{txyfRysTime},txyf_xjs_result=#{txyfXjsResult},txyf_xjs_time=#{txyfXjsTime},
+ 		txyg_rys_result=#{txygRysResult},txyg_rys_time=#{txygRysTime},txyg_xjs_result=#{txygXjsResult},txyg_xjs_time=#{txygXjsTime},
+ 		txyh_rys_result=#{txyhRysResult},txyh_rys_time=#{txyhRysTime},txyh_xjs_result=#{txyhXjsResult},txyh_xjs_time=#{txyhXjsTime},
+ 		cccyr=#{cccyr},fccyr=#{fccyr},remark=#{remark},courtyardArea=#{courtyardArea}
+ 		where id = ${id}
+ 	</update>
+ 	
+ 	<select id="queryDictionary" resultType="java.lang.String">
+ 		select ItemName 
+ 		from DictionaryItem 
+ 		where DictionaryTableID = (select id from DictionaryTable  where dictionaryclassid = (select id from DictionaryClass where ClassName = #{dictionaryClassName} and Del_Mark = 0) and name = #{dictionaryTableName} and Del_Mark = 0) and Del_Mark = 0
+ 	</select>
+</mapper>

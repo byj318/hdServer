@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>温附一透析排班一览表</title>
+    <link href="/webjars/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <script type="text/javascript" src="/js/jquery-1.8.3.min.js"></script>
+    <script src="/webjars/sockjs-client/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/stomp.min.js"></script>
+    <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+
+    <style type="text/css">
+        *{
+            margin: 0px;
+            padding: 0px;
+            text-align: center;
+        }
+        body{
+            overflow: hidden;
+        }
+        .titlecolor{
+            color:yellow;
+            text-align: center;
+            font-size: 25px;
+        }
+        .bodycolor{
+            color: #ffffff;
+            text-align: center;
+        }
+        table th{
+            text-align: center;
+        }
+        .title{
+            height: 40px;
+            font-size: 35px;
+            padding-bottom: 50px;
+            font-weight: bold;
+        }
+        table th{
+            border:3px solid #ffffff;
+        }
+        .typeColer{
+            color:red;
+        }
+        .blueKuang{
+            border:2px solid blue;
+            width: 80%;height: 80%;background-color: blue;background:linear-gradient(-90deg,blue 50%,#000000 50%);
+            /*background-position-x:left 35%; background-repeat:no-repeat;*/
+        }
+    </style>
+
+</head>
+<body  style="height: 100%;">
+<div id="contaner" class="outer" style="height: 100%;background-color: #000000">
+    <div class="title titlecolor">温附一透析排班一览表</div>
+    <table  width="100%" style="border:3px solid #ffffff;">
+
+            <tr class="titlecolor">
+                <th colspan="11">
+                    <div class="row">
+                        <div class="col-md-4" id="nyr">日期:</div>
+                        <div class="col-md-4" id="paiban">排班：</div>
+                        <div class="col-md-4" id="sf"></div>
+                    </div>
+                </th>
+            </tr>
+            <tr class="titlecolor">
+                <th colspan="5" width="44%">
+                    <div class="row">
+                        <div class="col-md-2">姓名</div>
+                        <div class="col-md-2"></div>
+                        <div class="col-md-2">床号</div>
+                        <div class="col-md-2">状态</div>
+                        <div class="col-md-4">时间</div>
+                    </div>
+                </th>
+                <th colspan="5" width="44%">
+                    <div class="col-md-2">姓名</div>
+                    <div class="col-md-2"></div>
+                    <div class="col-md-2">床号</div>
+                    <div class="col-md-2">状态</div>
+                    <div class="col-md-4">时间</div>
+                </th>
+                <th  width="12%">
+                        注意事项
+                </th>
+            </tr>
+        <tbody id="patient_contaner">
+
+
+
+
+
+        </tbody>
+    </table>
+
+</div>
+<div style="position: fixed; bottom:0; left:37%;color:#fff">Copyright© <span th:text="${year}"></span>华脉汇百通信息技术（北京）有限公司</div>
+</body>
+
+<script type="text/javascript">
+$(function(){
+    var myDate = new Date();
+    var hour = myDate.getHours();
+    hour = hour < 10 ? '0'+hour : hour;
+    var minute = myDate.getMinutes();
+    minute = minute < 10 ? '0'+minute:minute;
+    var sf = hour+':'+minute
+    $('#sf').text(sf);
+    //时钟
+    setInterval(function(){
+        var myDate = new Date();
+        var hour = myDate.getHours();
+        hour = hour < 10 ? '0'+hour : hour;
+        var minute = myDate.getMinutes();
+        minute = minute < 10 ? '0'+minute:minute;
+        var sf = hour+':'+minute;
+        $('#sf').text(sf);  //设置每秒刷新一次，显示在页面上
+    },60000) ;
+
+                            $.ajax({
+								url:'/screen/getData/2',
+								type:"GET",
+								dataType:"json",
+
+								success:function(data){
+								$('#nyr').text('日期: '+data.riqi);
+            $('#paiban').text('排班: '+data.banci);
+            $('.zysx').text(data.notice);
+setHtml(data.data,data.notice);
+                                    }
+
+							});
+							connect();
+});
+var myInterval;
+function setHtml(data,notice){
+if(data.length == 0){
+return;
+}
+setData(data[0],data[1],notice);
+clearInterval(myInterval);
+var i = 2;
+myInterval = setInterval(function(){
+var data1 = data[i];
+if(typeof(data1) == "undefined"){
+    return;
+}
+var data2 = data[i+1];
+setData(data1,data2,notice);
+var myDate = new Date();
+if(i == data.length-2 || i == data.length-1){
+    i = 0;
+}else{
+i+= 2;
+}
+}, 30000);
+
+
+};
+function setData(data1,data2,notice){
+var date = new Date();
+var year = date.getFullYear();
+
+var month = date.getMonth()+1;
+if(month < 10){
+month = '0' + month ;
+}
+var day = date.getDate();
+if(day < 10){
+day = '0' + day;
+}
+var hour = date.getHours();
+if(hour < 10){
+hour = '0' + hour;
+}
+var minute = date.getMinutes();
+if(minute < 10){
+minute = '0' + minute;
+}
+var nowTime = year+'-'+month+'-'+day+' '+hour+':'+minute;
+ var str = "";
+								for(var i = 0;i<11;i++){
+                                   str += '<tr class="bodycolor"  >';
+                                   if(typeof(data1) == "undefined" || typeof(data1[i]) == "undefined"){
+                                    str += '<th colspan="5" width="44%" ><div class="row"><div class="col-md-2">';
+                                   str += '';
+                                   str += '</div><div class="col-md-2 typeColer">';
+                                   str += '';
+                                   str += '</div><div class="col-md-2">';
+                                   str += '';
+                                   str += '</div><div class="col-md-2">';
+                                   str += '';
+                                   str += '</div><div class="col-md-4"><div >';
+                                   str += '';
+                                   str += '</div></div></div></th>';
+                                   }else{
+                                    str += '<th colspan="5" width="44%" ><div class="row"><div class="col-md-2">';
+                                     var name = data1[i].name;
+                                    if(data1[i].name.length == 2){
+
+                                    name = name.substr(0,1)+'*';
+
+                                    }else if(data1[i].name.length == 3){
+                                        name = name.substr(0,1)+'*'+name.substr(2,1);
+                                    }else if(data1[i].name.length == 4){
+                                        name = name.substr(0,1)+'**'+name.substr(3,1);
+                                    }
+                                     str += name;
+
+                                   str += '</div><div class="col-md-2 typeColer">';
+                                   str += data1[i].dialysisType;
+                                   str += '</div><div class="col-md-2">';
+                                   str += data1[i].bedcode;
+                                   str += '</div><div class="col-md-2">';
+                                   if(data1[i].shangjishijian == null){
+                                   str += '未上';
+                                   }else{
+                                   if(data1[i].state == 1){
+                                   str += '下机';
+                                   }else{
+                                   str += '透中';
+                                   }
+                                   }
+
+                                   if(data1[i].shangjishijian == null || data1[i].state == 1){
+                                    str += '</div><div>';
+
+                                   str += '';
+                                   }else{
+                                   var shangjishijian = data1[i].shangjishijian;
+                                   var xiajishijian = data1[i].xiajishijian;
+                                   if(xiajishijian != null){
+                                   xiajishijian = xiajishijian.substr(0,16);
+                                   shangjishijian = shangjishijian.substr(0.16);
+                                   var sysj = TimeDifference(nowTime,xiajishijian);
+                                   var zsj = TimeDifference(shangjishijian,xiajishijian);
+                                   var bfb = sysj/zsj;
+                                   var sybfb;
+                                   if(bfb >= 1 ){
+                                   bfb = 100;
+                                   sybfb = 0;
+                                   }else{
+                                   bfb = bfb.toFixed(2) * 100;
+                                   sybfb = 100 - bfb;
+                                   }
+                                   str += '</div><div class="col-md-4"><div style="border:2px solid blue;width: 80%;height: 80%;background-color: blue;background:linear-gradient(';
+                                    if(bfb >= 50){
+                                    str += 'to left, blue ';
+                                    str += bfb;
+                                   str += '%,#000 ';
+                                   str += sybfb;
+                                   str += '%);">';
+                                    }else{
+                                    str += 'to right,#000 ';
+                                    str += sybfb;
+                                   str += '%, blue ';
+                                   str += bfb;
+                                   str += '%);">';
+                                    }
+                                    str += '剩'+ sysj +'分钟';
+                                   }else{
+                                   str += '</div><div class="col-md-4"><div style="border:2px solid blue;width: 80%;height: 80%;background-color: blue;background:linear-gradient(-90deg,blue 60%,#000000 40%);">';
+
+                                   }
+
+                                   }
+
+                                   str += '</div></div></div></th>';
+                                   }
+
+                                    if(typeof(data2) == "undefined" || typeof(data2[i]) == "undefined"){
+str += '<th colspan="5" width="44%"><div class="col-md-2">';
+                                   str += '';
+                                   str += '</div><div class="col-md-2 typeColer">';
+                                   str +=  '';
+                                   str += '</div><div class="col-md-2">';
+                                   str += '';
+                                   str += '</div><div class="col-md-2">';
+                                   str += '';
+                                   str += '</div><div class="col-md-4"><div >';
+                                   str += '';
+                                   str += '</div></div></th>'
+                                    }else{
+str += '<th colspan="5" width="44%"><div class="col-md-2">';
+                                    var name = data2[i].name;
+                                    if(data2[i].name.length == 2){
+
+                                    name = name.substr(0,1)+'*';
+
+                                    }else if(data2[i].name.length == 3){
+                                        name = name.substr(0,1)+'*'+name.substr(2,1);
+                                    }else if(data2[i].name.length == 4){
+                                        name = name.substr(0,1)+'**'+name.substr(3,1);
+                                    }
+                                     str += name;
+                                   str += '</div><div class="col-md-2 typeColer">';
+                                   str +=  data2[i].dialysisType;
+                                   str += '</div><div class="col-md-2">';
+                                   str += data2[i].bedcode;
+                                   str += '</div><div class="col-md-2">';
+                                    if(data2[i].shangjishijian == null){
+                                   str += '未上';
+                                   }else{
+                                   if(data2[i].state == 1){
+                                   str += '下机';
+                                   }else{
+                                   str += '透中';
+                                   }
+                                   }
+
+                                    if(data2[i].shangjishijian == null || data2[i].state == 1){
+                                    str += '</div><div>';
+
+                                   str += '';
+                                   }else{
+                                   var shangjishijian = data2[i].shangjishijian;
+                                   var xiajishijian = data2[i].xiajishijian;
+                                   if(xiajishijian != null){
+                                    xiajishijian = xiajishijian.substr(0,16);
+                                   shangjishijian = shangjishijian.substr(0.16);
+                                   var sysj = TimeDifference(nowTime,xiajishijian);
+                                   var zsj = TimeDifference(shangjishijian,xiajishijian);
+                                   var bfb = sysj/zsj;
+                                   var sybfb;
+                                   if(bfb >= 1 ){
+                                   bfb = 100;
+                                   sybfb = 0;
+                                   }else{
+                                   bfb = bfb.toFixed(2) * 100;
+                                   sybfb = 100 - bfb;
+                                   }
+                                    str += '</div><div class="col-md-4"><div style="border:2px solid blue;width: 80%;height: 80%;background-color: blue;background:linear-gradient(';
+                                    if(bfb >= 50){
+                                    str += 'to left, blue ';
+                                    str += bfb;
+                                   str += '%,#000 ';
+                                   str += sybfb;
+                                   str += '%);">';
+                                    }else{
+                                    str += 'to right,#000 ';
+                                    str += sybfb;
+                                   str += '%, blue ';
+                                   str += bfb;
+                                   str += '%);">';
+                                    }
+
+
+                                    str += '剩'+ sysj +'分钟';
+                                   }else{
+                                   str += '</div><div class="col-md-4"><div style="border:2px solid blue;width: 80%;height: 80%;background-color: blue;background:linear-gradient(-90deg,blue 60%,#000000 40%);">';
+
+                                   }
+
+                                   }
+                                   str += '</div></div></th>'
+                                    }
+
+
+                                   str += '<th  width="12%" class="zysx" >'+notice+'</th>';
+                                   str += '</tr>';
+								}
+                                $("#patient_contaner").html(str);
+
+                                  var hs = 11;
+                                var height = $(window).height();
+                                $("#contaner").css("height",height);
+                                var tableHeith = height-90;
+                                var height = tableHeith/(hs+2);
+                                var fontSize = height - 50;
+                                $("tr").css("height",height);
+                                   $("tr").css("font-size",fontSize+'px');
+                                 $(".zysx").each(function (i, o) {
+                                    if(i!=0){
+                                        $(o).remove();
+
+                                    }else {
+                                        $(o).attr("rowspan",hs);
+                                    }
+
+                                });
+
+};
+
+function connect() {
+    var socket = new SockJS('/endpoint-websocket'); //连接上端点(基站)
+
+    stompClient = Stomp.over(socket);			//用stom进行包装，规范协议
+    stompClient.connect({}, function (frame) {
+        stompClient.subscribe('/topic/game_chat/old', function (result) {
+            var data = $.parseJSON( result.body);
+            $('#nyr').text('日期: '+data.riqi);
+            $('#paiban').text('排班: '+data.banci);
+        	setHtml(data.data,data.notice);
+        });
+    });
+};
+
+function TimeDifference(time1,time2)
+{
+//定义两个变量time1,time2分别保存开始和结束时间
+//判断开始时间是否大于结束日期
+if(time1>time2)
+{
+  return 0;
+}
+//截取字符串，得到日期部分"2009-12-02",用split把字符串分隔成数组
+var begin1=time1.substr(0,10).split("-");
+var end1=time2.substr(0,10).split("-");
+//将拆分的数组重新组合，并实例成化新的日期对象
+var date1=new Date(begin1[1] + - + begin1[2] + - + begin1[0]);
+var date2=new Date(end1[1] + - + end1[2] + - + end1[0]);
+//得到两个日期之间的差值m，以分钟为单位
+//Math.abs(date2-date1)计算出以毫秒为单位的差值
+//Math.abs(date2-date1)/1000得到以秒为单位的差值
+//Math.abs(date2-date1)/1000/60得到以分钟为单位的差值
+var m=parseInt(Math.abs(date2-date1)/1000/60);
+//小时数和分钟数相加得到总的分钟数
+//time1.substr(11,2)截取字符串得到时间的小时数
+//parseInt(time1.substr(11,2))*60把小时数转化成为分钟
+var min1=parseInt(time1.substr(11,2))*60+parseInt(time1.substr(14,2));
+var min2=parseInt(time2.substr(11,2))*60+parseInt(time2.substr(14,2));
+//两个分钟数相减得到时间部分的差值，以分钟为单位
+var n=min2-min1;
+//将日期和时间两个部分计算出来的差值相加，即得到两个时间相减后的分钟数
+var minutes=m+n;
+return minutes;
+}
+
+</script>
+</html>

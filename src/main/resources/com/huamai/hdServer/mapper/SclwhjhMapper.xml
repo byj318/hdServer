@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 水处理维护计划  mapper文件  用于书写复杂sql -->
+<mapper namespace="com.huamai.hdServer.mapper.SclwhjhMapper">
+ <select id="getAll" resultType="com.huamai.hdServer.domain.Sclwhjh">
+ 		select id,whsj,jsy,hly,llyjcs,llyjns,llejcs,llejns,ddys,ddyjcs,ddejcs,ddejns,zl,yd,ytjy,jly,ph,zdtsjjz,courtyardArea
+ 		from sclwhjh 
+ 		where is_delete = 0
+ 		<if test="startTime != null">
+			AND whsj >= #{startTime}
+		</if>
+		<if test="endTime != null">
+			AND whsj &lt;= #{endTime}
+		</if>
+		<if test="courtyardArea != null and courtyardArea != ''">
+			AND courtyardArea = #{courtyardArea}
+		</if>
+ 		order by whsj desc
+ 	</select>
+</mapper>

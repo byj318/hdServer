@@ -1,0 +1,607 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <title th:text="${title}"></title>
+
+     <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link href="/toastr/build/toastr.min.css" rel="stylesheet">
+    <link href="/bootstrap/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
+    <script type="text/javascript" src="/js/jquery-1.8.3.min.js"></script>
+	<script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/datatables.min.js"></script>
+	<script type="text/javascript" src="/toastr/build/toastr.min.js"></script>
+    <script type="text/javascript" src="/js/base.js"></script>
+	<script type="text/javascript" src="/bootstrap/js/bootstrap-datetimepicker.js" charset="UTF-8"></script>
+	<script type="text/javascript" src="/bootstrap/js/bootstrap-datetimepicker.zh-CN.js" charset="UTF-8"></script>
+    <script type="text/javascript" src="/js/base.js"></script>
+    <script type="text/javascript">
+    
+    var datas;
+    var flag = 1;
+    	$(function(){
+    		   //提示信息  初始化设置 一般不需要改
+    		
+            var lang = {
+                "sProcessing": "<img src='/images/loading.gif'><b>处理中...</b>",
+                "sLengthMenu": "每页 _MENU_ 项",
+                "sZeroRecords": "没有匹配结果",
+                "sInfo": "当前显示第 _START_ 至 _END_ 项，共 _TOTAL_ 项。",
+                "sInfoEmpty": "当前显示第 0 至 0 项，共 0 项",
+                "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+                "sInfoPostFix": "",
+                "sSearch": "搜索:",
+                "sUrl": "",
+                "sEmptyTable": "表中数据为空",
+                "sLoadingRecords": "载入中...",
+                "sInfoThousands": ",",
+                "oPaginate": {
+                    "sFirst": "首页",
+                    "sPrevious": "上页",
+                    "sNext": "下页",
+                    "sLast": "末页",
+                    "sJump": "跳转"
+                },
+                "oAria": {
+                    "sSortAscending": ": 以升序排列此列",
+                    "sSortDescending": ": 以降序排列此列"
+                }
+            };
+    		   
+    		   var loginName = $('#loginName').val();
+			   $('#gjzbtjSelect').val($('#courtyardArea').val());
+    		   
+          //重要修改 表格内容的自定义，需要根据业务定制
+            var dt = $("#gjzbtjExample").dataTable({
+                language:lang,  //提示信息
+                autoWidth: false,  //禁用自动调整列宽
+                stripeClasses: ["odd", "even"],  //为奇偶行加上样式，兼容不支持CSS伪类的场合
+                processing: true,  //隐藏加载提示,自行处理
+                serverSide: true,  //启用服务器端分页
+                searching: false,  //禁用原生搜索
+                orderMulti: false,  //启用多列排序
+                ordering: false,
+                scrollX: true,
+                order: [],  //取消默认排序查询,否则复选框一列会出现小箭头
+                renderer: "bootstrap",  //渲染样式：Bootstrap和jquery-ui
+                pagingType: "full_numbers",  //分页样式：simple,simple_numbers,full,full_numbers
+                columnDefs: [{
+                    "targets": 'nosort',  //列的样式名
+                    "orderable": false    //包含上样式名‘nosort’的禁止排序
+                }],
+                ajax: function (data, callback, settings) {
+					
+                    //封装请求参数
+                    var param = {};
+                    param.pageSize= data.length;//页面显示记录条数，在页面显示每页显示多少项的时候
+                   param.pageIndex = data.start;//当前页码
+                   var url = '/gjzbtj/listPage?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&courtyardArea='+$('#courtyardArea').val()+'&loginName='+loginName;
+                    //ajax请求数据方法
+                    $.ajax({
+                        type: "GET",
+                        url: url,//url请求的地址
+                        cache: false,  //禁用缓存
+                        data: param,  //传入组装的参数
+                        dataType: "json",
+                        success: function (result) {
+
+                                //封装返回数据重要
+                                var returnData = {};
+                                //这里直接自行返回了draw计数器,应该由后台返回
+                                returnData.draw = data.draw;
+                                //返回数据全部记录
+                                returnData.recordsTotal = result.recordsTotal;
+                                //后台不实现过滤功能，每次查询均视作全部结果
+                                returnData.recordsFiltered = result.recordsTotal;
+                                //返回的数据列表
+                                returnData.data = result.data;
+								datas = result.data;
+                                //调用DataTables提供的callback方法，代表数据已封装完成并传回DataTables进行渲染
+                                //此时的数据需确保正确无误，异常判断应在执行此回调前自行处理完毕
+                                callback(returnData);
+                        }
+                    });
+                },
+                //列表表头字段
+                columns:    [
+					{"data": "xgtlDbs","render": function ( data, type, full, meta ) {
+						if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('xgtlDbsList');\">"+data+"</a>";
+
+   	                } }
+   	                 },
+					{"data": "xgtlZs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('xgtlZsList');\">"+data+"</a>";
+   	                 }}},
+					{"data": "xgtlDbBfb"},
+					{"data": "xhdbDbs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('xhdbDbsList');\">"+data+"</a>";
+   	                } }},
+					{"data": "xhdbZs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('xhdbZsList');\">"+data+"</a>";
+   	                } }},
+					{"data": "xhdbPjs"},
+					{"data": "xhdbDbBfb"},
+					{"data": "bdbDbs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('bdbDbsList');\">"+data+"</a>";
+   	                 }}},
+					{"data": "bdbZs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('bdbZsList');\">"+data+"</a>";
+   	                } }},
+					{"data": "bdbPjs"},
+
+
+					{"data": "bdbDbBfb"},
+					{"data": "caDbs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('caDbsList');\">"+data+"</a>";
+   	                } }},
+					{"data": "caZs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('caZsList');\">"+data+"</a>";
+   	                } }},
+					{"data": "caPjs"},
+					{"data": "caDbBfb"},
+					{"data": "pdbs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('pDbsList');\">"+data+"</a>";
+   	                } }},
+					{"data": "pzs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('pZsList');\">"+data+"</a>";
+   	                } }},
+					{"data": "ppjs"},
+					{"data": "pdbBfb"},
+					{"data": "jzpxjsDbs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('jzpxjsDbsList');\">"+data+"</a>";
+   	                 }}},
+
+
+					{"data": "jzpxjsZs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('jzpxjsZsList');\">"+data+"</a>";
+   	                 }}},
+					{"data": "jzpxjsPjs"},
+					{"data": "jzpxjsDbBfb"},
+					{"data": "ktvDbs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('ktvDbsList');\">"+data+"</a>";
+   	                 }}},
+					{"data": "ktvZs","render": function ( data, type, full, meta ) {
+					if(data == 0){
+						return 0;
+						}else{
+   	                     return "<a style=\"color:blue;\" onmouseover=\"this.style.color='red'\" onmouseout=\"this.style.color='blue'\" href=\"javascript:void(0)\" onclick=\"getPatientInfo('ktvZsList');\">"+data+"</a>";
+   	                 }}},
+					{"data": "ktvPjs"},
+					{"data": "ktvDbBfb"}
+				]
+		}).api(); //此处需调用api()方法,否则返回的是JQuery对象而不是DataTables的API对象
+            //允许多选
+            $('#gjzbtjExample tbody').on( 'click', 'tr', function () {
+                $(this).toggleClass('selected');
+            } );
+
+                 
+            
+            $('#gjzbtjExample tbody').on( 'mouseenter', 'td', function () {
+                var colIdx = dt.cell(this).index().column;
+     
+                $( dt.cells().nodes() ).removeClass( 'highlight' );
+                $( dt.column( colIdx ).nodes() ).addClass( 'highlight' );
+            } );
+            $("#gjzbtjExample_length").append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id='export' class='btn btn-primary'><span class='glyphicon glyphicon-export' aria-hidden='true'></span> 导出</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;起始日期:<input id='startTime' name='startTime' type='text' style='width:130px' readonly/>&nbsp;&nbsp;&nbsp;结束日期:<input id='endTime' name='endTime' type='text' style='width:130px' readonly/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id='search' class='btn btn-info'><span class='glyphicon glyphicon-search' aria-hidden='true'></span> 搜索</button>");
+            $('#startTime').datetimepicker({
+				language: 'zh-CN', //汉化
+				format:"yyyy-mm-dd",
+				 weekStart: 1,
+			     todayBtn:  1,
+				 autoclose: 1,
+				 todayHighlight: 1,
+				 startView: 2,
+				 minView: 2,
+				 forceParse: 0
+		    });
+            $('#endTime').datetimepicker({
+				language: 'zh-CN', //汉化
+				format:"yyyy-mm-dd",
+				 weekStart: 1,
+			     todayBtn:  1,
+				 autoclose: 1,
+				 todayHighlight: 1,
+				 startView: 2,
+				 minView: 2,
+				 forceParse: 0
+		    });
+			var date = new Date();
+			var year = date.getFullYear();    //获取完整的年份(4位,1970-????)
+			var month = date.getMonth()+1;       //获取当前月份(0-11,0代表1月)
+			if(month < 10){
+				month = '0' + month;
+			}
+			var day = date.getDate();        //获取当前日(1-31)
+			if(day < 10){
+				day = '0' + day;
+			}
+			$('#startTime').val(year+'-01'+'-01');
+			$('#endTime').val(year+'-'+month+'-'+day);
+
+    		
+    		$("#export").unbind("click");
+    		$("#export").bind("click",function(){
+    			var url = '/gjzbtj/exportExcel?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&courtyardArea='+$('#courtyardArea').val()+'&loginName='+loginName;
+    			window.location.href = url;
+    		});
+
+
+    		$("#startTime").unbind("change");
+    		$("#startTime").bind("change",function(){
+    			dt.ajax.reload();
+    		});
+    		
+    		$("#endTime").unbind("change");
+    		$("#endTime").bind("change",function(){
+    			dt.ajax.reload();
+    		});
+
+    		$('#gjzbtjSelect').unbind("change");
+    		$('#gjzbtjSelect').bind("change",function(){
+    			$('#gjzbzltjSpan').text($(this).val());
+    			$('#courtyardArea').val($(this).val());
+    			dt.ajax.reload();
+    		});
+    		
+    		$("#search").unbind("click");
+    		$("#search").bind("click",function(){
+    			dt.ajax.reload();
+    		});
+    	});
+		var dataValue;
+function getPatientInfo(value){
+    	dataValue = value;
+    	var dd;
+    	switch(value)
+            {
+                case 'xgtlDbsList':
+                    $('#patientInfoListSpan1').text('血管通路');
+                    $('#patientInfoListSpan2').text('达标数');
+                    break;
+                case 'xgtlZsList':
+                    $('#patientInfoListSpan1').text('血管通路');
+                    $('#patientInfoListSpan2').text('总数');
+                    break;
+                case 'xhdbDbsList':
+                    $('#patientInfoListSpan1').text('血红蛋白');
+                    $('#patientInfoListSpan2').text('达标数');
+                    break;
+                case 'xhdbZsList':
+                    $('#patientInfoListSpan1').text('血红蛋白');
+                    $('#patientInfoListSpan2').text('总数');
+                    break;
+                case 'bdbDbsList':
+                    $('#patientInfoListSpan1').text('白蛋白');
+                    $('#patientInfoListSpan2').text('达标数');
+                    break;
+                case 'bdbZsList':
+                    $('#patientInfoListSpan1').text('白蛋白');
+                    $('#patientInfoListSpan2').text('总数');
+                    break;
+                case 'caDbsList':
+                    $('#patientInfoListSpan1').text('钙');
+                    $('#patientInfoListSpan2').text('达标数');
+                    break;
+                case 'caZsList':
+                    $('#patientInfoListSpan1').text('钙');
+                    $('#patientInfoListSpan2').text('总数');
+                    break;
+                case 'pDbsList':
+                    $('#patientInfoListSpan1').text('磷');
+                    $('#patientInfoListSpan2').text('达标数');
+                    break;
+                case 'pZsList':
+                    $('#patientInfoListSpan1').text('磷');
+                    $('#patientInfoListSpan2').text('总数');
+                    break;
+                case 'jzpxjsDbsList':
+                    $('#patientInfoListSpan1').text('甲状旁腺激素');
+                    $('#patientInfoListSpan2').text('达标数');
+                    break;
+                case 'jzpxjsZsList':
+                    $('#patientInfoListSpan1').text('甲状旁腺激素');
+                    $('#patientInfoListSpan2').text('总数');
+                    break;
+                case 'ktvDbsList':
+                    $('#patientInfoListSpan1').text('透析充分性');
+                    $('#patientInfoListSpan2').text('达标数');
+                    break;
+                case 'ktvZsList':
+                    $('#patientInfoListSpan1').text('透析充分性');
+                    $('#patientInfoListSpan2').text('总数');
+                    break;
+            }
+				createTable();
+
+    	};
+
+function createTable(){
+    		$('#listModal').modal({backdrop:"static"});
+
+    		     var lang = {
+                "sProcessing": "<img src='/images/loading.gif'><b>处理中...</b>",
+                "sLengthMenu": "每页 _MENU_ 项",
+                "sZeroRecords": "没有匹配结果",
+                "sInfo": "当前显示第 _START_ 至 _END_ 项，共 _TOTAL_ 项。",
+                "sInfoEmpty": "当前显示第 0 至 0 项，共 0 项",
+                "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+                "sInfoPostFix": "",
+                "sSearch": "搜索:",
+                "sUrl": "",
+                "sEmptyTable": "表中数据为空",
+                "sLoadingRecords": "载入中...",
+                "sInfoThousands": ",",
+                "oPaginate": {
+                    "sFirst": "首页",
+                    "sPrevious": "上页",
+                    "sNext": "下页",
+                    "sLast": "末页",
+                    "sJump": "跳转"
+                },
+                "oAria": {
+                    "sSortAscending": ": 以升序排列此列",
+                    "sSortDescending": ": 以降序排列此列"
+                }
+            };
+          //重要修改 表格内容的自定义，需要根据业务定制
+         	//$('#listExample').dataTable().fnDestroy();
+
+
+            dd = $("#listExample").dataTable({
+                language:lang,  //提示信息
+                autoWidth: false,  //禁用自动调整列宽
+                stripeClasses: ["odd", "even"],  //为奇偶行加上样式，兼容不支持CSS伪类的场合
+                processing: true,  //隐藏加载提示,自行处理
+
+                searching: true,  //禁用原生搜索
+                orderMulti: true,  //启用多列排序
+                ordering: true,
+                destroy:true,
+                order: [],  //取消默认排序查询,否则复选框一列会出现小箭头
+                renderer: "bootstrap",  //渲染样式：Bootstrap和jquery-ui
+                pagingType: "full_numbers",  //分页样式：simple,simple_numbers,full,full_numbers
+                columnDefs: [{
+                    "targets": 'nosort',  //列的样式名
+                    "orderable": false    //包含上样式名‘nosort’的禁止排序
+                }],
+                ajax: '/gjzbtj/listPatientInfo?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&loginName='+$('#loginName').val()+'&searchType='+dataValue+'&courtyardArea='+$('#courtyardArea').val(),
+                //列表表头字段
+                columns: [
+                {
+                         "class":          "details-control",
+                         "orderable":      false,
+                         "data":           null,
+                         "defaultContent": ""
+                     },
+
+                	{"data": "name"},
+    	            {"data": "casecode"},
+    	            {"data": "identitycard"},
+    	            {"data": "firstdialysetime"},
+    	            {"data": "hospitalId"}
+                ]
+            }).api(); //此处需调用api()方法,否则返回的是JQuery对象而不是DataTables的API对象
+             $("#listExample_length").append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button onclick='secondExport()' class='btn btn-primary'><span class='glyphicon glyphicon-export' aria-hidden='true'></span> 导出</button>");
+			$('#searchType').val(dataValue);
+			if(flag == 1){
+			prepare();
+			flag = 2;
+			}
+};
+
+function format ( d ) {
+                var html = '';
+         		if('xgtlDbsList' == dataValue || 'xgtlZsList' == dataValue){
+				html += '<div><b>检测日期:  </b> '+d.sfrq+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>检测结果:  </b> '+d.val+'</div>';
+         		}else{
+         		var value = d.val.split(',');
+         		$.each(value, function(i,val){
+         			  var result = val.split(': ');
+					 if(i % 2 == 0){
+					  html += '<div style="background-color: #f9f9f9;"><b>检测日期:  </b> '+result[0]+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>检测结果:  </b> '+result[1]+'</div>';
+					 }else{
+					 html += '<div><b>检测日期:  </b> '+result[0]+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>检测结果:  </b> '+result[1]+'</div>';
+					}
+				});}
+        		return html;
+    		};
+
+function prepare(){
+var detailRows = [];
+
+			$('#listExample tbody').on( 'click', 'tr td.details-control', function () {
+				var tr = $(this).closest('tr');
+				var row = dd.row( tr );
+				var idx = $.inArray( tr.attr('id'), detailRows );
+
+				if ( row.child.isShown() ) {
+					tr.removeClass( 'details' );
+					row.child.hide();
+
+					// Remove from the 'open' array
+					detailRows.splice( idx, 1 );
+				}
+				else {
+					tr.addClass( 'details' );
+					row.child( format( row.data() ) ).show();
+
+					// Add to the 'open' array
+					if ( idx === -1 ) {
+						detailRows.push( tr.attr('id') );
+					}
+				}
+			} );
+
+			// On each draw, loop over the `detailRows` array and show any child rows
+			dd.on( 'draw', function () {
+				$.each( detailRows, function ( i, id ) {
+					$('#'+id+' td.details-control').trigger( 'click' );
+				} );
+			} );
+};
+
+
+function secondExport(){
+	var url = '/gjzbtj/secondExportExcel?startTime='+$("#startTime").val()+'&endTime='+$("#endTime").val()+'&loginName='+$('#loginName').val()+'&searchType='+$('#searchType').val()+'&courtyardArea='+$('#courtyardArea').val();
+	window.location.href = url;
+};
+
+    </script>
+    <link rel="stylesheet" type="text/css" href="/css/datatables.min.css">
+    <style type="text/css">
+    	td.details-control {
+    background: url('/css/DataTables-1.10.18/images/edit_add.png') no-repeat center center;
+    cursor: pointer;
+		}
+		tr.details td.details-control {
+		    background: url('/css/DataTables-1.10.18/images/cancel.png') no-repeat center center;
+		}
+			
+	td.highlight {
+	    background-color: whitesmoke !important;
+	}
+	h2{
+		text-align:center
+	}
+	th {
+	    text-align: center;
+	}
+	td {
+	    text-align: center;
+	}
+    </style>
+</head>
+<body>
+<input type="hidden" th:value="${courtyardArea}" id="courtyardArea"/>
+<input type="hidden" th:value="${loginName}" id="loginName"/>
+<h2>关键指标质量统计(<span id="gjzbzltjSpan" th:text="${courtyardArea}"></span>)</h2>
+<select class="form-control" style="width:auto" id="gjzbtjSelect"><option value="新院">新院</option><option value="老院">老院</option><option value="全院">全院</option></select>
+<div>
+  <table id="gjzbtjExample" class="display" style="width:100%">
+	  <thead>
+	  <tr>
+		  <th rowspan="2" colspan="3">血管通路</th>
+		  <th colspan="4" style="color:blue;">贫血</th>
+		  <th colspan="4">白蛋白</th>
+		  <th colspan="4" style="color:blue;">钙</th>
+		  <th colspan="4">磷</th>
+		  <th colspan="4" style="color:blue;">甲状旁腺激素</th>
+		  <th colspan="4">透析充分性</th>
+	  </tr>
+	  <tr>
+
+		  <th colspan="4" style="color:blue;">化验检查最后一次的平均值</th>
+		  <th colspan="4">化验检查最后一次的平均值</th>
+		  <th colspan="4" style="color:blue;">化验检查最后一次的平均值</th>
+		  <th colspan="4">化验检查最后一次的平均值</th>
+		  <th colspan="4" style="color:blue;">化验检查最后一次的平均值</th>
+		  <th colspan="4">化验检查最后一次的平均值</th>
+	  </tr>
+	  <tr>
+		  <th>达标数</th>
+		  <th>总数</th>
+		  <th>百分比</th>
+		  <th style="color:blue;">达标数</th>
+		  <th style="color:blue;">总数</th>
+		  <th style="color:blue;">平均值</th>
+		  <th style="color:blue;">百分比</th>
+		  <th>达标数</th>
+		  <th>总数</th>
+		  <th>平均值</th>
+		  <th>百分比</th>
+		  <th style="color:blue;">达标数</th>
+		  <th style="color:blue;">总数</th>
+		  <th style="color:blue;">平均值</th>
+		  <th style="color:blue;">百分比</th>
+		  <th>达标数</th>
+		  <th>总数</th>
+		  <th>平均值</th>
+		  <th>百分比</th>
+		  <th style="color:blue;">达标数</th>
+		  <th style="color:blue;">总数</th>
+		  <th style="color:blue;">平均值</th>
+		  <th style="color:blue;">百分比</th>
+		  <th>达标数</th>
+		  <th>总数</th>
+		  <th>平均值</th>
+		  <th>百分比</th>
+
+	  </tr>
+	  </thead>
+    </table>
+    
+</div>
+<!-- 添加页面 -->
+<div class="modal fade" id="listModal" tabindex="-1" role="dialog"  aria-labelledby="myModalLabel">
+	<div class="modal-dialog" role="document" style="width: 1000px;">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel">具体病人信息列表(<span id="patientInfoListSpan1">血红蛋白</span>)(<span id="patientInfoListSpan2">达标数</span>)</h4>
+			</div>
+			<div class="modal-body">
+				<input type="hidden" id="searchType"/>
+				<table id="listExample" class="display" style="width:100%">
+					<thead>
+					<tr>
+						<th></th>
+						<th>姓名</th>
+						<th>病历本号</th>
+						<th>身份证</th>
+						<th>首次透析日期</th>
+						<th>院区</th>
+					</tr>
+					</thead>
+				</table>
+			</div>
+			<div class="modal-footer">
+
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<div style="position: fixed; bottom:0; left:37%">Copyright© <span th:text="${nowYear}"></span> 华脉汇百通信息技术（北京）有限公司</div>
+
+</body>
+</html>
